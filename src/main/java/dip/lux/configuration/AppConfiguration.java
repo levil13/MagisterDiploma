@@ -7,6 +7,8 @@ import dip.lux.service.util.PdfParser.impl.PdfParserImpl;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.multipart.MultipartResolver;
+import org.springframework.web.multipart.commons.CommonsMultipartResolver;
 import org.springframework.web.servlet.ViewResolver;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.view.InternalResourceViewResolver;
@@ -16,6 +18,7 @@ import org.springframework.web.servlet.view.JstlView;
 @EnableWebMvc
 @ComponentScan(basePackages = "dip.lux")
 public class AppConfiguration {
+    private final int maxUploadSizeInMb = 100 * 1024 * 1024; // 5 MB
     @Bean
     public ViewResolver viewResolver() {
         InternalResourceViewResolver viewResolver = new InternalResourceViewResolver();
@@ -24,6 +27,13 @@ public class AppConfiguration {
         viewResolver.setSuffix(".jsp");
 
         return viewResolver;
+    }
+
+    @Bean
+    public MultipartResolver multipartResolver(){
+        CommonsMultipartResolver multipartResolver = new CommonsMultipartResolver();
+        multipartResolver.setMaxUploadSize(maxUploadSizeInMb);
+        return multipartResolver;
     }
 
     @Bean
