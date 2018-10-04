@@ -1,5 +1,7 @@
 package dip.lux.controller;
 
+import dip.lux.service.UploadService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -15,42 +17,25 @@ import java.nio.file.AccessDeniedException;
 
 @Controller
 public class FileUploadController {
-    //Save the uploaded file to this folder
-    private static String UPLOADED_FOLDER = "D:\\Temp\\";
+    @Autowired
+    UploadService uploadService;
 
-    @PostMapping("/upload") // //new annotation since 4.3
+    @PostMapping("/upload")
     public String singleFileUpload(@RequestParam("file") MultipartFile file,
-                                   RedirectAttributes redirectAttributes) {
+                                   RedirectAttributes redirectAttributes) throws IOException {
 
         if (file.isEmpty()) {
-            redirectAttributes.addFlashAttribute("message", "Please select a file to upload");
+            redirectAttributes.addAttribute("message", "Please select a file to upload");
             return "redirect:uploadStatus";
         }
 
-        try {
-            // Get the file and save it somewhere
-            byte[] bytes = file.getBytes();
-            File dir = new File(UPLOADED_FOLDER);
-            if(!dir.exists()){
-                boolean isCreatedDir = dir.mkdirs();
-                if(!isCreatedDir){
-                    throw new AccessDeniedException("Can`t create directory");
-                }
-            }
-            BufferedOutputStream stream =
-                    new BufferedOutputStream(
-                            new FileOutputStream(
-                                    new File(dir + File.separator + file.getOriginalFilename())));
-            stream.write(bytes);
-            stream.close();
-
-        } catch (IOException e) {
-            e.printStackTrace();
+        if (uploadService.upload(file)) {
+            redirectAttributes.addAttribute("message",
+                    "You successfully uploaded '" + file.getOriginalFilename() + "'");
+        } else {
+            redirectAttributes.addAttribute("message",
+                    "Error in file upload '" + file.getOriginalFilename() + "'");
         }
-
-        redirectAttributes.addAttribute("message",
-                "You successfully uploaded '" + file.getOriginalFilename() + "'");
-
         return "redirect:/uploadStatus";
     }
 
