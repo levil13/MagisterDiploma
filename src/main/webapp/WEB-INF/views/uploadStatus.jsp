@@ -6,6 +6,8 @@
 
 <div th:if="${message}">
     <h2 th:text="${message}"></h2>
+
+    <input type="button" onclick="location.href='/'" value="Upload another file!">
 </div>
 
 </body>

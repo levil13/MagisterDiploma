@@ -64,7 +64,7 @@ public class UploadServiceImpl implements UploadService {
         counter++;
         String generatedName = createOriginalFileName(fileName, counter);
         if(isFileUploaded(generatedName)){
-            generateOriginalFileName(generatedName);
+            generatedName = generateOriginalFileName(generatedName);
         }
         return generatedName;
     }
