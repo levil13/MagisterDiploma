@@ -7,21 +7,28 @@ import com.itextpdf.text.pdf.PdfWriter;
 import com.yeokhengmeng.docstopdfconverter.DocToPDFConverter;
 import com.yeokhengmeng.docstopdfconverter.DocxToPDFConverter;
 import com.yeokhengmeng.docstopdfconverter.OdtToPDF;
+import dip.lux.service.UtilService;
+import dip.lux.service.ValidationService;
 import dip.lux.service.util.DocsConverter.DocsConverter;
+import org.springframework.beans.factory.annotation.Autowired;
 
 
 import java.io.*;
 
 public class DocsConverterImpl implements DocsConverter {
 
+    private final String path = "C:\\Temp\\converted";
+    private final String pdfType = ".pdf";
+
+    @Autowired
+    private UtilService utilService;
+
+    @Autowired
+    private ValidationService validationService;
+
     private DocToPDFConverter docToPDFConverter;
     private DocxToPDFConverter docxToPDFConverter;
     private OdtToPDF odtToPDFConverter;
-    private final String path = "C:\\Users\\Lux\\IdeaProjects\\MagisterDiploma\\src\\main\\resources";
-
-    private InputStream docInputStream(File newDoc) throws IOException {
-        return new FileInputStream(path + newDoc);
-    }
 
     private void createTemporaryPDF(String pdfName) throws FileNotFoundException, DocumentException {
         Document document = new Document();
@@ -33,42 +40,21 @@ public class DocsConverterImpl implements DocsConverter {
 
     @Override
     public boolean convertByFormat(String format, File doc) throws IOException, DocumentException {
-        InputStream docInput = docInputStream(doc);
-        createTemporaryPDF(path + "\\converted\\test2.pdf");
-        OutputStream pdfOutput = new FileOutputStream(path + "\\converted\\test2.pdf");
-        switch (format) {
-            case "DOC":
-                return convertDocToPdf(docInput, pdfOutput);
-            case "DOCX":
-                return convertDocxToPdf(docInput, pdfOutput);
-            case "ODT":
-                return convertOdtToPdf(docInput, pdfOutput);
-            default:
-                return false;
+        InputStream docInput = new FileInputStream(doc);
+        String docName = utilService.getNameWithoutFormat(doc) + pdfType;
+        utilService.createDirectoryIfNotExists(path);
+        createTemporaryPDF(path + File.separator + docName);
+        OutputStream pdfOutput = new FileOutputStream(path + File.separator + docName);
+        if (validationService.isDOC(format)) {
+            return convertDocToPdf(docInput, pdfOutput);
         }
-    }
-
-    @Override
-    public String getFileFormat(File doc) {
-        String docName = doc.getName();
-        if (docName.length() >= 4) {
-            return isAvailableFileFormat(docName.substring(docName.length() - 4));
-        } else {
-            return "Wrong file name size";
+        if (validationService.isDOCX(format)) {
+            return convertDocxToPdf(docInput, pdfOutput);
         }
-    }
-
-    private String isAvailableFileFormat(String docFileFormat) {
-        switch (docFileFormat) {
-            case ".doc":
-                return "DOC";
-            case "docx":
-                return "DOCX";
-            case ".odt":
-                return "ODT";
-            default:
-                return "ERROR";
+        if (validationService.isODT(format)) {
+            return convertOdtToPdf(docInput, pdfOutput);
         }
+        return false;
     }
 
     private boolean convertDocToPdf(InputStream inputStream, OutputStream outputStream) {

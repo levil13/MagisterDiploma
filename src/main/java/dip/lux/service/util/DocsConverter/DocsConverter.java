@@ -9,6 +9,4 @@ import java.io.IOException;
 @Service
 public interface DocsConverter {
     boolean convertByFormat(String format, File file) throws IOException, DocumentException;
-
-    String getFileFormat(File file);
 }

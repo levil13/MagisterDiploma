@@ -1,8 +1,12 @@
 package dip.lux.service.impl;
 
+import com.itextpdf.text.DocumentException;
 import dip.lux.service.UploadService;
+import dip.lux.service.UtilService;
+import dip.lux.service.util.DocsConverter.DocsConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -18,12 +22,18 @@ import java.util.Objects;
 @Service
 public class UploadServiceImpl implements UploadService {
     private static Logger logger = LoggerFactory.getLogger(UploadServiceImpl.class);
-    private static final String UPLOAD_FOLDER = "C:\\Temp\\";
+    private static final String UPLOAD_FOLDER = "C:\\Temp\\raw";
     private Integer counter = 0;
+
+    @Autowired
+    private DocsConverter docsConverter;
+
+    @Autowired
+    private UtilService utilService;
 
     @Override
     public boolean upload(MultipartFile file) {
-        boolean isDirectoryExists = createDirectoryIfNotExists(UPLOAD_FOLDER);
+        boolean isDirectoryExists = utilService.createDirectoryIfNotExists(UPLOAD_FOLDER);
         if(isDirectoryExists){
             byte[] fileBytes = getFileBytes(file);
             String fileName = file.getOriginalFilename();
@@ -31,14 +41,24 @@ public class UploadServiceImpl implements UploadService {
                 fileName = generateOriginalFileName(fileName);
             }
             writeFile(UPLOAD_FOLDER, fileBytes, fileName);
+            try {
+                formatFile(fileName);
+            } catch (IOException e) {
+                logger.error("Can't format the file: " + e);
+                return false;
+            } catch (DocumentException e) {
+                logger.error("Can't format the file: " + e);
+                return false;
+            }
             return true;
         }
         return false;
     }
 
-    private boolean createDirectoryIfNotExists(String path) {
-        File dir = new File(path);
-        return dir.exists() || dir.mkdirs();
+    private void formatFile(String fileName) throws IOException, DocumentException {
+        File newDoc = new File(UPLOAD_FOLDER + File.separator + fileName);
+        String format = utilService.getFileFormat(newDoc);
+        docsConverter.convertByFormat(format, newDoc);
     }
 
     private void writeFile(String path, byte[] fileBytes, String fileName){

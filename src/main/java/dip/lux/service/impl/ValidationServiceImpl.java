@@ -1,6 +1,7 @@
 package dip.lux.service.impl;
 
 import dip.lux.service.ValidationService;
+import dip.lux.service.model.DocType;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
@@ -14,9 +15,9 @@ public class ValidationServiceImpl implements ValidationService {
 
     @PostConstruct
     private void init(){
-        validTypes.add("DOCX");
-        validTypes.add("DOC");
-        validTypes.add("ODT");
+        for(DocType type: DocType.values()){
+            validTypes.add(type.getType());
+        }
     }
 
     @Override
@@ -31,5 +32,21 @@ public class ValidationServiceImpl implements ValidationService {
             }
         }
         return false;
+    }
+
+    @Override
+    public boolean isDOCX(String format){
+        return DocType.DOCX.equals(format);
+
+    }
+
+    @Override
+    public boolean isDOC(String format){
+        return DocType.DOC.equals(format);
+    }
+
+    @Override
+    public boolean isODT(String format){
+        return DocType.ODT.equals(format);
     }
 }
