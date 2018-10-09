@@ -43,10 +43,7 @@ public class UploadServiceImpl implements UploadService {
             writeFile(UPLOAD_FOLDER, fileBytes, fileName);
             try {
                 formatFile(fileName);
-            } catch (IOException e) {
-                logger.error("Can't format the file: " + e);
-                return false;
-            } catch (DocumentException e) {
+            } catch (IOException | DocumentException e) {
                 logger.error("Can't format the file: " + e);
                 return false;
             }
