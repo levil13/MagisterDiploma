@@ -38,12 +38,10 @@ public class FileUploadController {
             return "redirect:uploadStatus";
         }
 
-        if (uploadService.upload(file)) {
-            redirectAttributes.addAttribute("message",
-                    "You successfully uploaded '" + file.getOriginalFilename() + "'");
-        } else {
-            redirectAttributes.addAttribute("message",
-                    "Error in file upload '" + file.getOriginalFilename() + "'");
+        String uploadedFileName = uploadService.upload(file);
+        if(uploadedFileName.equalsIgnoreCase("ERROR")){
+            redirectAttributes.addAttribute("message", "Error in file upload: " + file.getOriginalFilename());
+            return "redirect:uploadStatus";
         }
         return "redirect:/uploadStatus";
     }

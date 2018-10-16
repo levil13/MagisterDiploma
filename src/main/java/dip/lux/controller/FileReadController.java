@@ -1,5 +1,6 @@
 package dip.lux.controller;
 
+import dip.lux.service.ShingleService;
 import dip.lux.service.UtilService;
 import dip.lux.service.util.PdfParser.PdfParser;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,12 +17,17 @@ public class FileReadController {
     @Autowired
     UtilService utilService;
 
+    @Autowired
+    ShingleService shingleService;
+
     @RequestMapping(value = "/read", method = RequestMethod.GET, produces = {"application/json; charset=UTF-8"})
     @ResponseBody
     public String readFile(@RequestParam String fileName){
         File file = new File(fileName);
         try {
-            return pdfParser.parsePdf("C:\\Temp\\converted\\" + utilService.getNameWithoutFormat(file) + ".pdf");
+            String str1 = shingleService.canonize(pdfParser.parsePdf("C:\\Temp\\converted\\" + utilService.getNameWithoutFormat(file) + ".pdf"));
+            String str2 = "hello";
+            return "result " + shingleService.compare(shingleService.generateShingle(str1), shingleService.generateShingle(str2));
         } catch (IOException e) {
             e.printStackTrace();
             return "No such file for parsing";

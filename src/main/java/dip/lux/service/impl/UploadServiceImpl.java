@@ -23,6 +23,7 @@ import java.util.Objects;
 public class UploadServiceImpl implements UploadService {
     private static Logger logger = LoggerFactory.getLogger(UploadServiceImpl.class);
     private static final String UPLOAD_FOLDER = "C:\\Temp\\raw";
+    private static final String STATUS_ERROR = "ERROR";
     private Integer counter = 0;
 
     @Autowired
@@ -32,7 +33,7 @@ public class UploadServiceImpl implements UploadService {
     private UtilService utilService;
 
     @Override
-    public boolean upload(MultipartFile file) {
+    public String upload(MultipartFile file) {
         boolean isDirectoryExists = utilService.createDirectoryIfNotExists(UPLOAD_FOLDER);
         if(isDirectoryExists){
             byte[] fileBytes = getFileBytes(file);
@@ -45,11 +46,11 @@ public class UploadServiceImpl implements UploadService {
                 formatFile(fileName);
             } catch (IOException | DocumentException e) {
                 logger.error("Can't format the file: " + e);
-                return false;
+                return STATUS_ERROR;
             }
-            return true;
+            return fileName;
         }
-        return false;
+        return STATUS_ERROR;
     }
 
     private void formatFile(String fileName) throws IOException, DocumentException {
