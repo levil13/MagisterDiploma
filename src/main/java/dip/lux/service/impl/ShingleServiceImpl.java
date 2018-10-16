@@ -7,11 +7,7 @@ import java.util.ArrayList;
 
 @Service
 public class ShingleServiceImpl implements ShingleService {
-    private static final String STOP_SYMBOLS[] = {".", ",", "!", "?", ":", ";", "-", "\\", "/", "*", "(", ")", "+", "@",
-            "#", "$", "%", "^", "&", "=", "'", "\"", "[", "]", "{", "}", "|"};
-    private static final String STOP_WORDS_RU[] = {"это", "как", "так", "и", "в", "над", "к", "до", "не", "на", "но", "за",
-            "то", "с", "ли", "а", "во", "от", "со", "для", "о", "же", "ну", "вы",
-            "бы", "что", "кто", "он", "она"};
+    private static final String[] STOP_WORDS_RU = {"это", "как", "так", "над", "для", "что", "кто", "она", "таблица", "рисунок", "рис", "таб", "табл"};
 
     private static final int SHINGLE_LEN = 2;
 
@@ -19,12 +15,20 @@ public class ShingleServiceImpl implements ShingleService {
     @Override
     public String canonize(String str) {
         str = str.toLowerCase();
-        for (String stopSymbol : STOP_SYMBOLS) {
-            str = str.replace(stopSymbol, "");
-        }
+        str = str.replaceAll("[^\\p{L}\\p{Nd}]+|\\s", " ");
+        str = str.replaceAll("\n", " ");
+        str = str.replaceAll("[0-9]", " ");
+        str = str.replaceAll("[A-Za-z]", " ");
+        str = str.replaceAll(" +", " ");
 
         for (String stopWord : STOP_WORDS_RU) {
             str = str.replace(" " + stopWord + " ", " ");
+        }
+
+        for(String word: str.split(" ")){
+            if(word.length() > 0 && word.length() < 3){
+                str = str.replace(" " + word + " ", " ");
+            }
         }
 
         return str;

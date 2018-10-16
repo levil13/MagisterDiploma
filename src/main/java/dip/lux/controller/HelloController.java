@@ -9,8 +9,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 @RequestMapping("/")
 public class HelloController {
     @RequestMapping(method = RequestMethod.GET)
-    public String sayHello(ModelMap model) {
-        model.addAttribute("greeting", "Hellou");
+    public String sayHello() {
         return "upload";
     }
 }

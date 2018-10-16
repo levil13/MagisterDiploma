@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Array;
+import java.util.ArrayList;
 
 @RestController
 public class FileReadController {
@@ -25,9 +27,12 @@ public class FileReadController {
     public String readFile(@RequestParam String fileName){
         File file = new File(fileName);
         try {
-            String str1 = shingleService.canonize(pdfParser.parsePdf("C:\\Temp\\converted\\" + utilService.getNameWithoutFormat(file) + ".pdf"));
-            String str2 = "hello";
-            return "result " + shingleService.compare(shingleService.generateShingle(str1), shingleService.generateShingle(str2));
+            ArrayList<String> stopStrings = new ArrayList<>();
+            stopStrings.add("Курсовая работа");
+            stopStrings.add("Заключение");
+            stopStrings.add("Литература");
+            stopStrings.add("Контрольный пример");
+            return shingleService.canonize(pdfParser.parsePdf("C:\\Temp\\converted\\" + utilService.getNameWithoutFormat(file) + ".pdf", stopStrings));
         } catch (IOException e) {
             e.printStackTrace();
             return "No such file for parsing";
