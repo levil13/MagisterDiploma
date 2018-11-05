@@ -1,0 +1,3 @@
+function UserController($q, $http) {
+
+}

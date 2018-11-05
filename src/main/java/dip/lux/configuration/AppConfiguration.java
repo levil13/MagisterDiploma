@@ -11,26 +11,40 @@ import org.springframework.web.multipart.MultipartResolver;
 import org.springframework.web.multipart.commons.CommonsMultipartResolver;
 import org.springframework.web.servlet.ViewResolver;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
-import org.springframework.web.servlet.view.InternalResourceViewResolver;
-import org.springframework.web.servlet.view.JstlView;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.web.servlet.view.freemarker.FreeMarkerConfigurer;
+import org.springframework.web.servlet.view.freemarker.FreeMarkerViewResolver;
 
 @Configuration
 @EnableWebMvc
 @ComponentScan(basePackages = "dip.lux")
-public class AppConfiguration {
+public class AppConfiguration implements WebMvcConfigurer {
     private final int maxUploadSizeInMb = 100 * 1024 * 1024; // 5 MB
-    @Bean
-    public ViewResolver viewResolver() {
-        InternalResourceViewResolver viewResolver = new InternalResourceViewResolver();
-        viewResolver.setViewClass(JstlView.class);
-        viewResolver.setPrefix("/WEB-INF/views/");
-        viewResolver.setSuffix(".jsp");
 
-        return viewResolver;
+    @Override
+    public void addResourceHandlers(final ResourceHandlerRegistry registry) {
+        registry.addResourceHandler("/scripts/**").addResourceLocations("/WEB-INF/static/js/");
+        registry.addResourceHandler("/styles/**").addResourceLocations("/WEB-INF/static/css/");
+        registry.addResourceHandler("/templates/**").addResourceLocations("/WEB-INF/static/templates/");
     }
 
     @Bean
-    public MultipartResolver multipartResolver(){
+    public ViewResolver freeMarkerViewResolver() {
+        FreeMarkerViewResolver resolver = new FreeMarkerViewResolver();
+        resolver.setSuffix(".ftl");
+        return resolver;
+    }
+
+    @Bean
+    public FreeMarkerConfigurer freeMarkerConfigurer() {
+        FreeMarkerConfigurer configurer = new FreeMarkerConfigurer();
+        configurer.setTemplateLoaderPath("/WEB-INF/static/templates/");
+        return configurer;
+    }
+
+    @Bean
+    public MultipartResolver multipartResolver() {
         CommonsMultipartResolver multipartResolver = new CommonsMultipartResolver();
         multipartResolver.setMaxUploadSize(maxUploadSizeInMb);
         return multipartResolver;
