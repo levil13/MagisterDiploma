@@ -1,2 +1,2 @@
 angular.module('app.constants', [])
-    .constant('Urls', getUrls());
+    .constant('urls', getUrls());

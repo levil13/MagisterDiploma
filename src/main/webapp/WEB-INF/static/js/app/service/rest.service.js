@@ -1,9 +1,9 @@
-restService.$inject = ['$q', '$http', '$log'];
+restService.$inject = ['$q', '$http', '$log', 'urls'];
 
-function restService($q, $http, $log) {
+function restService($q, $http, $log, urls) {
     var service = {};
 
-    service.restUrl = "http://localhost:1337/";
+    service.restUrl = urls.BASE;
 
     service.http = function (method, url, data, params, config) {
         return $http({
