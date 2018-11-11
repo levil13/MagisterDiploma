@@ -33,4 +33,9 @@ app
 
 app
     .factory('restService', restService)
-    .factory('restRequestService', restRequestService);
+    .factory('restRequestService', restRequestService)
+    .factory('utilService', utilService)
+    .factory('transliterateService', transliterateService);
+
+app
+    .component('loadingComponent', loadingComponent);

@@ -6,8 +6,11 @@
     <link href="styles/app.css" rel="stylesheet"/>
 </head>
 <body>
-<div>
+<div ng-hide="errorCtrl.utilService.isLoading">
     <h1 ng-bind="errorCtrl.errorMsg"></h1>
+</div>
+<div ng-show="errorCtrl.utilService.isLoading">
+    Loading syka!
 </div>
 </body>
 </html>

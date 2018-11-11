@@ -55,7 +55,8 @@ public class UploadServiceImpl implements UploadService {
 
     private void formatFile(String fileName) throws IOException, DocumentException {
         File newDoc = new File(UPLOAD_FOLDER + File.separator + fileName);
-        String format = utilService.getFileFormat(newDoc);
+        String name = newDoc.getName();
+        String format = utilService.getFileFormat(name);
         docsConverter.convertByFormat(format, newDoc);
     }
 

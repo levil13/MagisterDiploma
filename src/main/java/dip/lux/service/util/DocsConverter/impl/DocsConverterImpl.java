@@ -17,7 +17,7 @@ import java.io.*;
 
 public class DocsConverterImpl implements DocsConverter {
 
-    private final String path = "C:\\Temp\\converted";
+    private final String CONVERTED_PATH = "C:\\Temp\\converted\\";
     private final String pdfType = ".pdf";
 
     @Autowired
@@ -41,10 +41,13 @@ public class DocsConverterImpl implements DocsConverter {
     @Override
     public boolean convertByFormat(String format, File doc) throws IOException, DocumentException {
         InputStream docInput = new FileInputStream(doc);
-        String docName = utilService.getNameWithoutFormat(doc) + pdfType;
-        utilService.createDirectoryIfNotExists(path);
-        createTemporaryPDF(path + File.separator + docName);
-        OutputStream pdfOutput = new FileOutputStream(path + File.separator + docName);
+        String name = doc.getName();
+        String docNameWithoutFormat = utilService.getNameWithoutFormat(name);
+        String docName = docNameWithoutFormat + pdfType;
+        String filePath = CONVERTED_PATH + docNameWithoutFormat;
+        utilService.createDirectoryIfNotExists(filePath);
+        createTemporaryPDF(filePath + File.separator + docName);
+        OutputStream pdfOutput = new FileOutputStream(filePath + File.separator + docName);
         if (validationService.isDOC(format)) {
             return convertDocToPdf(docInput, pdfOutput);
         }

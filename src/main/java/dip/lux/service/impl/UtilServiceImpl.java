@@ -15,9 +15,8 @@ public class UtilServiceImpl implements UtilService {
     }
 
     @Override
-    public String getFileFormat(File doc) {
-        String docName = doc.getName();
-        String[] nameParts = docName.split("\\.");
+    public String getFileFormat(String name) {
+        String[] nameParts = name.split("\\.");
         if(nameParts.length != 2){
             return "Wrong file format";
         }
@@ -25,9 +24,8 @@ public class UtilServiceImpl implements UtilService {
     }
 
     @Override
-    public String getNameWithoutFormat(File doc) {
-        String docName = doc.getName();
-        String[] nameParts = docName.split("\\.");
+    public String getNameWithoutFormat(String name) {
+        String[] nameParts = name.split("\\.");
         if(nameParts.length != 2){
             return "Wrong file format";
         }

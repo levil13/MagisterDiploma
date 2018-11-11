@@ -1,11 +1,9 @@
 package dip.lux.service;
 
-import java.io.File;
-
 public interface UtilService {
     boolean createDirectoryIfNotExists(String path);
 
-    String getFileFormat(File doc);
+    String getFileFormat(String name);
 
-    String getNameWithoutFormat(File doc);
+    String getNameWithoutFormat(String fileName);
 }

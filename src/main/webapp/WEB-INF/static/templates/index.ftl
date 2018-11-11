@@ -17,6 +17,8 @@
 <script src="scripts/app/constants/constants.module.js"></script>
 <script src="scripts/app/service/rest.service.js"></script>
 <script src="scripts/app/service/rest-request.service.js"></script>
+<script src="scripts/app/service/util.service.js"></script>
+<script src="scripts/app/service/transliterate.service.js"></script>
 <script src="scripts/app/controller/upload.controller.js"></script>
 <script src="scripts/app/controller/process.controller.js"></script>
 <script src="scripts/app/controller/error.controller.js"></script>

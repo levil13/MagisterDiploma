@@ -1,3 +1,0 @@
-function UserController($q, $http) {
-
-}

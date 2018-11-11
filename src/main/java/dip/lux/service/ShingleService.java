@@ -3,7 +3,7 @@ package dip.lux.service;
 import java.util.ArrayList;
 
 public interface ShingleService {
-    String canonize(String str);
+    String canonize(String fileContent);
 
     ArrayList<Integer> generateShingle(String str);
 

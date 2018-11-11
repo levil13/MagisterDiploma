@@ -13,25 +13,25 @@ public class ShingleServiceImpl implements ShingleService {
 
 
     @Override
-    public String canonize(String str) {
-        str = str.toLowerCase();
-        str = str.replaceAll("[^\\p{L}\\p{Nd}]+|\\s", " ");
-        str = str.replaceAll("\n", " ");
-        str = str.replaceAll("[0-9]", " ");
-        str = str.replaceAll("[A-Za-z]", " ");
-        str = str.replaceAll(" +", " ");
+    public String canonize(String fileContent) {
+        fileContent = fileContent.toLowerCase();
+        fileContent = fileContent.replaceAll("[^\\p{L}\\p{Nd}]+|\\s", " ");
+        fileContent = fileContent.replaceAll("\n", " ");
+        fileContent = fileContent.replaceAll("[0-9]", " ");
+        fileContent = fileContent.replaceAll("[A-Za-z]", " ");
+        fileContent = fileContent.replaceAll(" +", " ");
 
         for (String stopWord : STOP_WORDS_RU) {
-            str = str.replace(" " + stopWord + " ", " ");
+            fileContent = fileContent.replace(" " + stopWord + " ", " ");
         }
 
-        for(String word: str.split(" ")){
+        for(String word: fileContent.split(" ")){
             if(word.length() > 0 && word.length() < 3){
-                str = str.replace(" " + word + " ", " ");
+                fileContent = fileContent.replace(" " + word + " ", " ");
             }
         }
 
-        return str;
+        return fileContent;
     }
 
     @Override
