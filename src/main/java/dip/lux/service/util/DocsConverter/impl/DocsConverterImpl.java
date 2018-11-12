@@ -7,11 +7,10 @@ import com.itextpdf.text.pdf.PdfWriter;
 import com.yeokhengmeng.docstopdfconverter.DocToPDFConverter;
 import com.yeokhengmeng.docstopdfconverter.DocxToPDFConverter;
 import com.yeokhengmeng.docstopdfconverter.OdtToPDF;
-import dip.lux.service.UtilService;
 import dip.lux.service.ValidationService;
+import dip.lux.service.impl.UtilService;
 import dip.lux.service.util.DocsConverter.DocsConverter;
 import org.springframework.beans.factory.annotation.Autowired;
-
 
 import java.io.*;
 
@@ -21,32 +20,21 @@ public class DocsConverterImpl implements DocsConverter {
     private final String pdfType = ".pdf";
 
     @Autowired
-    private UtilService utilService;
-
-    @Autowired
     private ValidationService validationService;
 
     private DocToPDFConverter docToPDFConverter;
     private DocxToPDFConverter docxToPDFConverter;
     private OdtToPDF odtToPDFConverter;
 
-    private void createTemporaryPDF(String pdfName) throws FileNotFoundException, DocumentException {
-        Document document = new Document();
-        PdfWriter.getInstance(document, new FileOutputStream(pdfName));
-        document.open();
-        document.add(new Paragraph("This is a temporary pdf"));
-        document.close();
-    }
-
     @Override
     public boolean convertByFormat(String format, File doc) throws IOException, DocumentException {
         InputStream docInput = new FileInputStream(doc);
         String name = doc.getName();
-        String docNameWithoutFormat = utilService.getNameWithoutFormat(name);
+        String docNameWithoutFormat = UtilService.getNameWithoutFormat(name);
         String docName = docNameWithoutFormat + pdfType;
         String filePath = CONVERTED_PATH + docNameWithoutFormat;
-        utilService.createDirectoryIfNotExists(filePath);
-        createTemporaryPDF(filePath + File.separator + docName);
+        UtilService.createDirectoryIfNotExists(filePath);
+        UtilService.createTemporaryPDF(filePath + File.separator + docName);
         OutputStream pdfOutput = new FileOutputStream(filePath + File.separator + docName);
         if (validationService.isDOC(format)) {
             return convertDocToPdf(docInput, pdfOutput);

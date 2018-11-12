@@ -6,7 +6,7 @@ import dip.lux.service.util.PdfParser.PdfParser;
 import org.springframework.util.CollectionUtils;
 
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.List;
 
 public class PdfParserImpl implements PdfParser {
     private PdfReader pdfReader;
@@ -17,7 +17,7 @@ public class PdfParserImpl implements PdfParser {
         return parsePdf(pdfFileName, null);
     }
 
-    public String parsePdf(String pdfFileName, ArrayList<String> stopStrings) throws IOException {
+    public String parsePdf(String pdfFileName, List<String> stopStrings) throws IOException {
         fullParsedFile = "";
         pdfReader = new PdfReader(pdfFileName);
         int pageNum = pdfReader.getNumberOfPages();
@@ -30,7 +30,7 @@ public class PdfParserImpl implements PdfParser {
         return fullParsedFile;
     }
 
-    private boolean isNeedFullPage(String page, ArrayList<String> stopStrings) {
+    private boolean isNeedFullPage(String page, List<String> stopStrings) {
         if (CollectionUtils.isEmpty(stopStrings)){
             return true;
         }

@@ -25,6 +25,20 @@ function processController($stateParams, $state, restRequestService, utilService
             });
     };
 
+    self.readChildFile = function (childFileName) {
+        utilService.toggleLoading(true);
+        restRequestService.readChildFile(utilService.getFileNameWithoutFormat(self.fileName), childFileName)
+            .then(function (response) {
+                self.childFileText = response && response.data && response.data.childFileText;
+            })
+            .catch(function (reason) {
+                $state.go('error', {errorMsg: reason.data.errorMsg});
+            })
+            .finally(function () {
+                utilService.toggleLoading(false);
+            });
+    };
+
     self.canonizeFile = function (fileName) {
         utilService.toggleLoading(true);
         var fileNameWithoutFormat = utilService.getFileNameWithoutFormat(fileName);
@@ -45,7 +59,7 @@ function processController($stateParams, $state, restRequestService, utilService
         var fileNameWithoutFormat = utilService.getFileNameWithoutFormat(fileName);
         restRequestService.createDOM(fileNameWithoutFormat)
             .then(function (response) {
-                self.canonizedFileContent = response && response.data && response.data.canonizedFile;
+                self.domFiles = response && response.data && response.data.domFiles;
             })
             .catch(function (reason) {
                 $state.go('error', {errorMsg: reason.data.errorMsg});

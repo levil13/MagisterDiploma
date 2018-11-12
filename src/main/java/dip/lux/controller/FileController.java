@@ -1,7 +1,11 @@
 package dip.lux.controller;
 
 import dip.lux.model.FileEntity;
-import dip.lux.service.*;
+import dip.lux.service.FileService;
+import dip.lux.service.ShingleService;
+import dip.lux.service.UploadService;
+import dip.lux.service.ValidationService;
+import dip.lux.service.impl.UtilService;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -31,9 +35,6 @@ public class FileController {
     @Autowired
     private FileService fileService;
 
-    @Autowired
-    private UtilService utilService;
-
     @PostMapping(value = "/upload")
     public ResponseEntity singleFileUpload(@RequestParam("file") MultipartFile file) {
         Map<String, Object> response = new HashMap<>();
@@ -54,7 +55,7 @@ public class FileController {
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
-        fileEntity.setFileName(utilService.getNameWithoutFormat(uploadedFileName));
+        fileEntity.setFileName(UtilService.getNameWithoutFormat(uploadedFileName));
 
         response.put("fileName", uploadedFileName);
         return new ResponseEntity<>(response, HttpStatus.OK);
@@ -74,6 +75,24 @@ public class FileController {
 
         fileEntity.setFileContent(text);
         response.put("fileText", text);
+
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @GetMapping(value = "/read/{parentName}/{childName}")
+    @ResponseBody
+    public ResponseEntity readChildFile(@PathVariable String parentName,
+                                        @PathVariable String childName) {
+        Map<String, Object> response = new HashMap<>();
+        Map<String, String> fileContent = fileService.readChildFile(parentName, childName);
+        if (fileContent.get("status").equals("ERROR")) {
+            response.put("errorMsg", "Error during reading file");
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        String text = fileContent.get("text");
+
+        response.put("childFileText", text);
 
         return new ResponseEntity<>(response, HttpStatus.OK);
     }

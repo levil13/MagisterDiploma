@@ -21,6 +21,19 @@
     </button>
 </div>
 <div ng-hide="processCtrl.utilService.isLoading">
+    <div ng-hide="!processCtrl.domFiles">
+        <h2>DOM Files:</h2>
+        <div ng-repeat="domFile in processCtrl.domFiles">
+            <button ng-click="processCtrl.readChildFile(domFile)">{{domFile}}</button>
+        </div>
+    </div>
+    <div ng-hide="!processCtrl.childFileText">
+        <h2>Child file text:</h2>
+        <div ng-bind="processCtrl.childFileText"></div>
+    </div>
+</div>
+
+<div ng-hide="processCtrl.utilService.isLoading">
     <div ng-hide="!processCtrl.text">
         <h2>File Text:</h2>
         <div ng-bind="processCtrl.text">

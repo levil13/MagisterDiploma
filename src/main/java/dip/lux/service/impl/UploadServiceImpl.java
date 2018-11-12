@@ -2,7 +2,6 @@ package dip.lux.service.impl;
 
 import com.itextpdf.text.DocumentException;
 import dip.lux.service.UploadService;
-import dip.lux.service.UtilService;
 import dip.lux.service.util.DocsConverter.DocsConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,12 +28,9 @@ public class UploadServiceImpl implements UploadService {
     @Autowired
     private DocsConverter docsConverter;
 
-    @Autowired
-    private UtilService utilService;
-
     @Override
     public String upload(MultipartFile file) {
-        boolean isDirectoryExists = utilService.createDirectoryIfNotExists(UPLOAD_FOLDER);
+        boolean isDirectoryExists = UtilService.createDirectoryIfNotExists(UPLOAD_FOLDER);
         if(isDirectoryExists){
             byte[] fileBytes = getFileBytes(file);
             String fileName = file.getOriginalFilename();
@@ -56,7 +52,7 @@ public class UploadServiceImpl implements UploadService {
     private void formatFile(String fileName) throws IOException, DocumentException {
         File newDoc = new File(UPLOAD_FOLDER + File.separator + fileName);
         String name = newDoc.getName();
-        String format = utilService.getFileFormat(name);
+        String format = UtilService.getFileFormat(name);
         docsConverter.convertByFormat(format, newDoc);
     }
 

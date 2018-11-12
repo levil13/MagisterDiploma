@@ -19,8 +19,8 @@ function utilService(transliterateService) {
         var preparedFileName = service.getFileNameWithoutFormat(fileName);
         preparedFileName = transliterateService.transliterate(preparedFileName);
         preparedFileName = preparedFileName
-            .replace(/\s\s+/g, ' ')
-            .replace(' ', '_');
+            .trim()
+            .replace(/[^0-9a-zA-Z.]/g, '');
         return preparedFileName.concat('.', service.getFileFormat(fileName));
     };
 
