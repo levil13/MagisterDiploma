@@ -59,7 +59,7 @@ function processController($stateParams, $state, restRequestService, utilService
         var fileNameWithoutFormat = utilService.getFileNameWithoutFormat(fileName);
         restRequestService.createDOM(fileNameWithoutFormat)
             .then(function (response) {
-                self.domFiles = response && response.data && response.data.domFiles;
+                self.childFiles = response && response.data && response.data.childFiles;
             })
             .catch(function (reason) {
                 $state.go('error', {errorMsg: reason.data.errorMsg});

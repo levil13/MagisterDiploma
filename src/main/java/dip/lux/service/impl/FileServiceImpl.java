@@ -1,103 +1,67 @@
 package dip.lux.service.impl;
 
-import com.itextpdf.text.Document;
-import com.itextpdf.text.DocumentException;
-import com.itextpdf.text.Font;
-import com.itextpdf.text.Paragraph;
-import com.itextpdf.text.pdf.BaseFont;
 import dip.lux.model.FileEntity;
+import dip.lux.model.util.Status;
 import dip.lux.service.FileService;
+import dip.lux.service.model.StatusType;
 import dip.lux.service.util.PdfParser.PdfParser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 @Service
 public class FileServiceImpl implements FileService {
 
-    private final String CONVERTED_PATH = "C:\\Temp\\converted\\";
     private final String NEW_SECTION_REGEX = "\n{3,}";
     private final String NEW_SUBSECTION_REGEX = "\n{2,}";
     private final String TITLE_PAGE_LAST_ITEM = "(.+)\\s?(–|-)\\s?[0-9]{4}";
-    private final String pdfType = ".pdf";
 
     @Autowired
     private PdfParser pdfParser;
 
-    @Autowired
-    private FileEntity fileEntity;
-
     @Override
-    public Map<String, String> readFile(String fileName) {
-        Map<String, String> result = new HashMap<>();
-        String fileContent = null;
-        result.put("status", "OK");
+    public Map<String, Object> readFile(String fileName) {
+        Map<String, Object> result = new HashMap<>();
+        Status operationStatus = new Status();
+        String fileText = null;
+        operationStatus.setStatusType(StatusType.OK);
         try {
-            fileContent = pdfParser.parsePdf(CONVERTED_PATH + fileName + "\\" + fileName + ".pdf");
+            fileText = pdfParser.parsePdf(UtilService.generateConvertedPath(fileName, fileName));
         } catch (IOException e) {
-            result.put("status", "ERROR");
+            operationStatus.setStatusType(StatusType.ERROR);
+            operationStatus.setErrorMsg("Can not find file to read");
         }
-        result.put("text", fileContent);
+        result.put("status", operationStatus);
+        result.put("text", fileText);
         return result;
     }
 
     @Override
-    public Map<String, String> readChildFile(String parentName, String childName) {
-        Map<String, String> result = new HashMap<>();
-        String fileContent = null;
-        result.put("status", "OK");
-        try {
-            fileContent = pdfParser.parsePdf(CONVERTED_PATH + parentName + "\\" + childName + ".pdf");
-        } catch (IOException e) {
-            result.put("status", "ERROR");
+    public List<FileEntity> createDOM(String parentText, String parentName) {
+        List<FileEntity> childFiles = new ArrayList<>();
+        Map<String, String> sections = prepareAndSplitBySections(parentText);
+        for (Map.Entry<String, String> section : sections.entrySet()) {
+            String pathToFile = UtilService.generateConvertedPath(parentName, section.getKey());
+            Status createFileStatus = UtilService.createFile(pathToFile, section.getValue());
+            childFiles.add(childFileFactory(section.getKey(), section.getValue(), createFileStatus));
         }
-        result.put("text", fileContent);
-        return result;
+        return childFiles;
     }
 
-    @Override
-    public ArrayList<String> createDOM(String fileContent) {
-        fileContent = removePaging(fileContent);
-        ArrayList<String> domFiles = new ArrayList<>();
-        ArrayList<String> splittedFile = new ArrayList<>(Arrays.asList(fileContent.split(NEW_SECTION_REGEX)));
-        ArrayList<String> splittedFileWithoutTitle = removeTitleListFromDOM(splittedFile);
-        for(String section: splittedFileWithoutTitle){
-            ArrayList<String> splittedSection = new ArrayList<>(Arrays.asList(section.split(NEW_SUBSECTION_REGEX)));
-            if(splittedSection.size() > 1){
-                String path = CONVERTED_PATH + fileEntity.getFileName();
-                String name = path + File.separator + splittedSection.get(0) + pdfType;
-                try {
-                    Document document = UtilService.createTemporaryPDF(name);
-                    final BaseFont bf = BaseFont.createFont("C:\\Windows\\Fonts\\Arial.ttf", BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
-                    final Font font = new Font(bf);
-                    for (int i = 1; i < splittedSection.size(); i++) {
-                        document.add(new Paragraph(splittedSection.get(i), font));
-                    }
-                    document.close();
-                } catch (FileNotFoundException e) {
-                    e.printStackTrace();
-                } catch (DocumentException e) {
-                    e.printStackTrace();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                domFiles.add(splittedSection.get(0));
-            }
-        }
-        return domFiles;
+    private FileEntity childFileFactory(String childName, String childText, Status childStatus){
+        FileEntity childFile = new FileEntity();
+        childFile.setFileName(childName);
+        childFile.setFileText(childText);
+        childFile.setStatus(childStatus);
+        return childFile;
     }
 
-    private ArrayList<String> removeTitleListFromDOM(ArrayList<String> domStructure){
+    private ArrayList<String> removeTitleListFromDOM(ArrayList<String> domStructure) {
         ArrayList<String> structureForDelete = new ArrayList<>();
-        for(String domStructureElement: domStructure){
-            if(domStructureElement.matches(TITLE_PAGE_LAST_ITEM)){
+        for (String domStructureElement : domStructure) {
+            if (domStructureElement.matches(TITLE_PAGE_LAST_ITEM)) {
                 structureForDelete.add(domStructureElement);
                 break;
             }
@@ -107,7 +71,39 @@ public class FileServiceImpl implements FileService {
         return domStructure;
     }
 
+    private Map<String, String> prepareAndSplitBySections(String fileText) {
+        ArrayList<String> rawSections = removePagingAndTitle(fileText);
+        return formatSections(rawSections);
+    }
+
+    private Map<String, String> formatSections(ArrayList<String> rawSections) {
+        Map<String, String> formattedSections = new HashMap<>();
+        for (String rawSection : rawSections) {
+            ArrayList<String> sectionNameAndText = new ArrayList<>(Arrays.asList(rawSection.split(NEW_SUBSECTION_REGEX)));
+            if (sectionNameAndText.size() > 1) {
+                String sectionName = sectionNameAndText.get(0);
+                String sectionText = getSectionText(sectionNameAndText);
+                formattedSections.put(sectionName, sectionText);
+            }
+        }
+        return formattedSections;
+    }
+
+    private String getSectionText(ArrayList<String> sectionNameAndText) {
+        StringBuilder sectionText = new StringBuilder();
+        for (int i = 1; i < sectionNameAndText.size(); i++) {
+            sectionText.append(sectionNameAndText.get(i));
+        }
+        return sectionText.toString();
+    }
+
+    private ArrayList<String> removePagingAndTitle(String text) {
+        text = removePaging(text);
+        ArrayList<String> sectionsWithTitle = new ArrayList<>(Arrays.asList(text.split(NEW_SECTION_REGEX)));
+        return removeTitleListFromDOM(sectionsWithTitle);
+    }
+
     private String removePaging(String fileContent) {
-        return fileContent.replaceAll("\n[0-9]\n","\n\n");
+        return fileContent.replaceAll("\n[0-9]\n", "\n\n");
     }
 }

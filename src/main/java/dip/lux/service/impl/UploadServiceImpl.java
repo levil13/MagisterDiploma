@@ -2,6 +2,7 @@ package dip.lux.service.impl;
 
 import com.itextpdf.text.DocumentException;
 import dip.lux.service.UploadService;
+import dip.lux.service.model.StatusType;
 import dip.lux.service.util.DocsConverter.DocsConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,7 +23,6 @@ import java.util.Objects;
 public class UploadServiceImpl implements UploadService {
     private static Logger logger = LoggerFactory.getLogger(UploadServiceImpl.class);
     private static final String UPLOAD_FOLDER = "C:\\Temp\\raw";
-    private static final String STATUS_ERROR = "ERROR";
     private Integer counter = 0;
 
     @Autowired
@@ -42,11 +42,11 @@ public class UploadServiceImpl implements UploadService {
                 formatFile(fileName);
             } catch (IOException | DocumentException e) {
                 logger.error("Can't format the file: " + e);
-                return STATUS_ERROR;
+                return StatusType.ERROR.getType();
             }
             return fileName;
         }
-        return STATUS_ERROR;
+        return StatusType.ERROR.getType();
     }
 
     private void formatFile(String fileName) throws IOException, DocumentException {

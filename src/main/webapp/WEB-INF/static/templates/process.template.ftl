@@ -21,10 +21,10 @@
     </button>
 </div>
 <div ng-hide="processCtrl.utilService.isLoading">
-    <div ng-hide="!processCtrl.domFiles">
-        <h2>DOM Files:</h2>
-        <div ng-repeat="domFile in processCtrl.domFiles">
-            <button ng-click="processCtrl.readChildFile(domFile)">{{domFile}}</button>
+    <div ng-hide="!processCtrl.childFiles">
+        <h2>Child Files:</h2>
+        <div ng-repeat="childFile in processCtrl.childFiles">
+            <button ng-click="processCtrl.childFileText = childFile.fileText">{{childFile.fileName}}</button>
         </div>
     </div>
     <div ng-hide="!processCtrl.childFileText">

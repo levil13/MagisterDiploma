@@ -2,8 +2,6 @@ package dip.lux.service.util.DocsConverter.impl;
 
 import com.itextpdf.text.Document;
 import com.itextpdf.text.DocumentException;
-import com.itextpdf.text.Paragraph;
-import com.itextpdf.text.pdf.PdfWriter;
 import com.yeokhengmeng.docstopdfconverter.DocToPDFConverter;
 import com.yeokhengmeng.docstopdfconverter.DocxToPDFConverter;
 import com.yeokhengmeng.docstopdfconverter.OdtToPDF;
@@ -15,9 +13,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.io.*;
 
 public class DocsConverterImpl implements DocsConverter {
-
-    private final String CONVERTED_PATH = "C:\\Temp\\converted\\";
-    private final String pdfType = ".pdf";
 
     @Autowired
     private ValidationService validationService;
@@ -31,11 +26,11 @@ public class DocsConverterImpl implements DocsConverter {
         InputStream docInput = new FileInputStream(doc);
         String name = doc.getName();
         String docNameWithoutFormat = UtilService.getNameWithoutFormat(name);
-        String docName = docNameWithoutFormat + pdfType;
-        String filePath = CONVERTED_PATH + docNameWithoutFormat;
-        UtilService.createDirectoryIfNotExists(filePath);
-        UtilService.createTemporaryPDF(filePath + File.separator + docName);
-        OutputStream pdfOutput = new FileOutputStream(filePath + File.separator + docName);
+        String pdfPath = UtilService.generateConvertedPath(docNameWithoutFormat, docNameWithoutFormat);
+        UtilService.createDirectoryIfNotExists(UtilService.generateConvertedFolderPath(docNameWithoutFormat));
+        Document tempDoc = UtilService.createTemporaryPDF(pdfPath);
+        tempDoc.close();
+        OutputStream pdfOutput = new FileOutputStream(pdfPath);
         if (validationService.isDOC(format)) {
             return convertDocToPdf(docInput, pdfOutput);
         }

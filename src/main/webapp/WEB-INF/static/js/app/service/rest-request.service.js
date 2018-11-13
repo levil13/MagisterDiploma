@@ -16,19 +16,19 @@ function restRequestService(restService, Upload, urls, utilService) {
     };
 
     service.readFile = function (fileName) {
-        return restService.get('/file/read/' + fileName);
+        return restService.get('/file/read/', {parentName: fileName});
     };
 
     service.readChildFile = function (parentName, childName) {
-        return restService.get('/file/read/' + parentName + '/' + childName);
+        return restService.get('/file/read/', {parentName: parentName, childName: childName});
     };
 
     service.canonizeFile = function (fileName) {
         return restService.get('/file/canonize/' + fileName);
     };
 
-    service.createDOM = function (fileName) {
-        return restService.get('/file/create-dom/' + fileName);
+    service.createDOM = function () {
+        return restService.get('/file/create-dom/');
     };
 
     return service;

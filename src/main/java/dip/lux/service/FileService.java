@@ -1,12 +1,12 @@
 package dip.lux.service;
 
-import java.util.ArrayList;
+import dip.lux.model.FileEntity;
+
+import java.util.List;
 import java.util.Map;
 
 public interface FileService {
-    Map<String, String> readFile(String fileName);
+    Map<String, Object> readFile(String fileName);
 
-    Map<String, String> readChildFile(String parentFile, String childFile);
-
-    ArrayList<String> createDOM(String fileContent);
+    List<FileEntity> createDOM(String parentText, String parentName);
 }
