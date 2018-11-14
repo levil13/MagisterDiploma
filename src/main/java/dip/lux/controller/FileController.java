@@ -1,6 +1,7 @@
 package dip.lux.controller;
 
 import dip.lux.model.FileEntity;
+import dip.lux.model.util.Query;
 import dip.lux.model.util.Status;
 import dip.lux.service.FileService;
 import dip.lux.service.ShingleService;
@@ -124,6 +125,75 @@ public class FileController {
         }
         fileEntity.setChildFiles(childFiles);
         response.put("childFiles", childFiles);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @GetMapping(value = "/searchQueries")
+    @ResponseBody
+    public ResponseEntity searchQueries(@RequestParam String fileName){
+        Map<String, Object> response = new HashMap<>();
+        FileEntity fileToFindUsages;
+        if(isSessionFile(fileName)){
+            fileToFindUsages = fileEntity;
+        } else if(isSessionChildFile(fileName)){
+            fileToFindUsages = findSessionChildFile(fileName);
+        } else {
+            updateSessionFileContent(fileName);
+            fileToFindUsages = fileEntity;
+        }
+        Map<String, Object> result = fileService.search(fileToFindUsages.getQueries());
+
+        Status findUsagesStatus = (Status) result.get("status");
+        if(findUsagesStatus.getStatusType().equals(StatusType.ERROR)){
+            response.put("errorMsg", findUsagesStatus.getErrorMsg() + " in file " + fileToFindUsages.getFileName());
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        fileToFindUsages.setQueries((List<Query>) result.get("queriesWithResponses"));
+
+        return new ResponseEntity<>(result, HttpStatus.OK);
+    }
+
+    @GetMapping(value = "/calculate-queries")
+    @ResponseBody
+    public ResponseEntity calculateQueries(@RequestParam String fileName){
+        Map<String, Object> response = new HashMap<>();
+        FileEntity fileToFindUsages;
+        if(isSessionFile(fileName)){
+            fileToFindUsages = fileEntity;
+        } else if(isSessionChildFile(fileName)){
+            fileToFindUsages = findSessionChildFile(fileName);
+        } else {
+            updateSessionFileContent(fileName);
+            fileToFindUsages = fileEntity;
+        }
+        String canonizedText = shingleService.canonize(fileToFindUsages.getFileText());
+        List<Query> queries = fileService.getQueries(canonizedText, fileToFindUsages.getFileName());
+
+        fileToFindUsages.setQueries(queries);
+
+        response.put("queriesSize", queries.size());
+
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+
+
+    @GetMapping(value = "/get-existing-queries")
+    @ResponseBody
+    public ResponseEntity getExistingUsages(@RequestParam String fileName){
+        Map<String, Object> response = new HashMap<>();
+        FileEntity fileToFindUsages;
+        if(isSessionFile(fileName)){
+            fileToFindUsages = fileEntity;
+        } else if(isSessionChildFile(fileName)){
+            fileToFindUsages = findSessionChildFile(fileName);
+        } else {
+            updateSessionFileContent(fileName);
+            fileToFindUsages = fileEntity;
+        }
+
+        response.put("queriesWithResponses", fileToFindUsages.getQueries());
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 

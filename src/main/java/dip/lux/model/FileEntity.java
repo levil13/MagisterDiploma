@@ -1,5 +1,6 @@
 package dip.lux.model;
 
+import dip.lux.model.util.Query;
 import dip.lux.model.util.Status;
 import org.springframework.stereotype.Component;
 
@@ -11,6 +12,15 @@ public class FileEntity {
     private String fileText;
     private List<FileEntity> childFiles;
     private Status status;
+    private List<Query> queries;
+
+    public List<Query> getQueries() {
+        return queries;
+    }
+
+    public void setQueries(List<Query> queries) {
+        this.queries = queries;
+    }
 
     public Status getStatus() {
         return status;

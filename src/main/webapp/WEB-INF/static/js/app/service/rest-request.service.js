@@ -31,5 +31,17 @@ function restRequestService(restService, Upload, urls, utilService) {
         return restService.get('/file/create-dom/');
     };
 
+    service.calculateQueries = function (fileName) {
+        return restService.get('/file/calculate-queries/', {fileName: fileName});
+    };
+
+    service.searchQueries = function (fileName) {
+        return restService.get('/file/searchQueries/', {fileName: fileName});
+    };
+
+    service.getExistingUsages = function (fileName) {
+        return restService.get('/file/get-existing-queries/', {fileName: fileName});
+    };
+
     return service;
 }

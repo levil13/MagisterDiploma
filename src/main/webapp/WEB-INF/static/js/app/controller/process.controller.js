@@ -1,4 +1,4 @@
-function processController($stateParams, $state, restRequestService, utilService) {
+function processController($rootScope, $stateParams, $state, restRequestService, utilService) {
 
     var self = this;
 
@@ -69,6 +69,30 @@ function processController($stateParams, $state, restRequestService, utilService
             });
     };
 
+    self.findUsages = function (fileName) {
+        utilService.toggleLoading(true);
+        var fileNameWithoutFormat = utilService.getFileNameWithoutFormat(fileName);
+        restRequestService.calculateQueries(fileNameWithoutFormat)
+            .then(function (response) {
+                self.queriesSize = response.data.queriesSize;
+                _startTimer();
+                return restRequestService.searchQueries(fileNameWithoutFormat);
+            })
+            .then(function (response) {
+                _stopTimer();
+                $state.go('result', {
+                    fileName: fileNameWithoutFormat,
+                    queries: response.data && response.data.queriesWithResponses
+                });
+            })
+            .catch(function (reason) {
+                $state.go('error', {errorMsg: reason.data.errorMsg});
+            })
+            .finally(function () {
+                utilService.toggleLoading(false);
+            });
+    };
+
     function _updateCurrentFileName() {
         utilService.toggleLoading(true);
         restRequestService.getCurrentFileName()
@@ -81,5 +105,13 @@ function processController($stateParams, $state, restRequestService, utilService
             .finally(function () {
                 utilService.toggleLoading(false);
             });
+    }
+
+    function _startTimer() {
+        $rootScope.$broadcast('timer-start');
+    }
+
+    function _stopTimer() {
+        $rootScope.$broadcast('timer-stop');
     }
 }

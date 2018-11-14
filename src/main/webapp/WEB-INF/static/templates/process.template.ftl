@@ -6,6 +6,11 @@
     <link href="styles/app.css" rel="stylesheet"/>
 </head>
 <body>
+<div ng-show="processCtrl.queriesSize">
+    <h3>Queries size: {{processCtrl.queriesSize}}</h3>
+    <h3>Approximate search time: {{processCtrl.utilService.calculateSearchTime(processCtrl.queriesSize)}}</h3>
+    <h3>Timer: <timer> minutes,  seconds.</timer></h3>
+</div>
 <div ng-hide="processCtrl.utilService.isLoading">
     <h1 ng-bind="processCtrl.fileName"></h1>
     <button ng-click="processCtrl.readFile(processCtrl.fileName)">
@@ -25,6 +30,7 @@
         <h2>Child Files:</h2>
         <div ng-repeat="childFile in processCtrl.childFiles">
             <button ng-click="processCtrl.childFileText = childFile.fileText">{{childFile.fileName}}</button>
+            <button ng-click="processCtrl.findUsages(childFile.fileName)">Find usages for {{childFile.fileName}}</button>
         </div>
     </div>
     <div ng-hide="!processCtrl.childFileText">

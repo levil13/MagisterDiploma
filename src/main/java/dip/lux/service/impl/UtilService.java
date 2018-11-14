@@ -13,6 +13,8 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.List;
+import java.util.Random;
 
 
 public class UtilService {
@@ -93,6 +95,28 @@ public class UtilService {
             e.printStackTrace();
         }
         return operationStatus;
+    }
+
+    public static String createQuery(List<String> queryParams) {
+        StringBuilder query = new StringBuilder("\"");
+        for (int i = 0; i < queryParams.size(); i++) {
+            query.append(queryParams.get(i));
+            if(i != queryParams.size() - 1){
+                query.append("%20");
+            }
+        }
+        query.append("\"");
+        return query.toString();
+    }
+
+    public static int getRandomNumberInRange(int min, int max) {
+
+        if (min >= max) {
+            throw new IllegalArgumentException("max must be greater than min");
+        }
+
+        Random r = new Random();
+        return r.nextInt((max - min) + 1) + min;
     }
 
 

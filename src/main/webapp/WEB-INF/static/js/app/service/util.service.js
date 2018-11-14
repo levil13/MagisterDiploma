@@ -11,7 +11,7 @@ function utilService(transliterateService) {
         return fileName.split('.')[0];
     };
 
-    service.getFileFormat = function(fileName){
+    service.getFileFormat = function (fileName) {
         return fileName.split('.')[1];
     };
 
@@ -22,6 +22,22 @@ function utilService(transliterateService) {
             .trim()
             .replace(/[^0-9a-zA-Z.]/g, '');
         return preparedFileName.concat('.', service.getFileFormat(fileName));
+    };
+
+    service.calculateSearchTime = function (queriesSize) {
+        var totalSeconds = queriesSize * 5;
+        var hours = Math.floor(totalSeconds / 3600);
+        var minutes = Math.floor((totalSeconds - (hours * 3600)) / 60);
+        var seconds = totalSeconds - (hours * 3600) - (minutes * 60);
+
+        // round seconds
+        seconds = Math.round(seconds * 100) / 100;
+
+        var result = (hours < 10 ? "0" + hours : hours);
+        result += " hours " + (minutes < 10 ? "0" + minutes : minutes);
+        result += " minutes " + (seconds < 10 ? "0" + seconds : seconds);
+        result += " seconds";
+        return result;
     };
 
     return service;

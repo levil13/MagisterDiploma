@@ -20,6 +20,16 @@ app
                         fileName: null
                     }
                 })
+                .state('result', {
+                    url: '/result/:fileName',
+                    templateUrl: 'templates/result.template.ftl',
+                    controller: resultController,
+                    controllerAs: 'resultCtrl',
+                    params: {
+                        fileName: null,
+                        queries: []
+                    }
+                })
                 .state('error', {
                     url: '/error',
                     templateUrl: 'templates/error.template.ftl',
