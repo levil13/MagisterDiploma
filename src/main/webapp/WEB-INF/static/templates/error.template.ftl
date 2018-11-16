@@ -10,7 +10,7 @@
     <h1 ng-bind="errorCtrl.errorMsg"></h1>
 </div>
 <div ng-show="errorCtrl.utilService.isLoading">
-    Loading syka!
+    Loading...
 </div>
 </body>
 </html>

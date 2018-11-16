@@ -15,7 +15,7 @@
     </button>
 </div>
 <div ng-show="uploadCtrl.utilService.isLoading">
-    Loading syka!
+    Loading...
 </div>
 </body>
 </html>

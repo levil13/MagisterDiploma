@@ -20,7 +20,7 @@
 </div>
 
 <div ng-show="resultCtrl.utilService.isLoading">
-    Loading syka!
+    Loading...
 </div>
 </body>
 </html>

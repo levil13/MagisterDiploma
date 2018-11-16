@@ -56,7 +56,7 @@
 </div>
 
 <div ng-show="processCtrl.utilService.isLoading">
-    Loading syka!
+    Loading...
 </div>
 </body>
 </html>
