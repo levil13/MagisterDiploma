@@ -1,26 +1,29 @@
 package dip.lux.service.impl;
 
-import dip.lux.model.FileEntity;
+import dip.lux.model.Section;
 import dip.lux.model.util.Query;
 import dip.lux.model.util.Status;
 import dip.lux.service.FileService;
 import dip.lux.service.SearchQueryService;
 import dip.lux.service.model.StatusType;
 import dip.lux.service.util.PdfParser.PdfParser;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.math.BigInteger;
 import java.util.*;
 
 @Service
 public class FileServiceImpl implements FileService {
 
-    private final String NEW_SECTION_REGEX = "\n{3,}";
-    private final String NEW_SUBSECTION_REGEX = "\n{2,}";
-    private final String TITLE_PAGE_LAST_ITEM = "(.+)\\s?(–|-)\\s?[0-9]{4}";
+    private final String NEW_SUBSECTION_REGEX = "([0-9]+\\.?)+ ((\\p{L})+\\s*?-?)+";
     private final String SPLIT_BY_WORDS_REGEX = " ";
+    private final String SPLIT_BY_PAGES = "\nNPD\n";
+    private final String PAGING_REGEX = "([0-9])+(((\\s?)+(\n)+))+";
+    private final String ADDITION = ".*ДОДАТОК.*";
+    private final String CYRILLIC_LETTERS = ".*(\\p{L}).*";
+    private final String MAIN_SECTION = "[0-9]+(_(\\p{L}+)_?)+(-?(\\p{L}+)_?)+";
 
     @Autowired
     private SearchQueryService searchQueryService;
@@ -46,15 +49,57 @@ public class FileServiceImpl implements FileService {
     }
 
     @Override
-    public List<FileEntity> createDOM(String parentText, String parentName) {
-        List<FileEntity> childFiles = new ArrayList<>();
-        Map<String, String> sections = prepareAndSplitBySections(parentText);
-        for (Map.Entry<String, String> section : sections.entrySet()) {
-            String pathToFile = UtilService.generateConvertedPath(parentName, section.getKey());
-            Status createFileStatus = UtilService.createFile(pathToFile, section.getValue());
-            childFiles.add(childFileFactory(section.getKey(), section.getValue(), createFileStatus));
+    public List<Section> createDOM(String parentText, String parentName) {
+        List<Section> sections = prepareSections(parentText);
+        for (Section section : sections) {
+            String pathToFile = UtilService.generateConvertedPath(parentName, section.getSectionName());
+            UtilService.createFile(pathToFile, section.getSectionText());
         }
-        return childFiles;
+        List<Section> sectionsWithSubs = prepareSubSections(sections);
+        return sectionsWithSubs;
+    }
+
+    private List<Section> prepareSubSections(List<Section> parentSections) {
+        for (Section parentSection : parentSections) {
+            if (isSubSectionsExists(parentSection)) {
+                List<Section> subSections = new ArrayList<>();
+                List<String> parentSectionTextLines = new ArrayList<>(Arrays.asList(parentSection.getSectionText().split("\n")));
+                parentSectionTextLines = removeSpacesFromStart(parentSectionTextLines);
+                for (String parentSectionTextLine : parentSectionTextLines) {
+                    if (isNewSubSection((parentSectionTextLine))) {
+                        Section subSection = new Section();
+                        String sectionName = parentSectionTextLine;
+                        subSection.setSectionName(sectionName);
+                        subSections.add(subSection);
+                    } else {
+                        if (subSections.size() > 0) {
+                            Section lastSubSection = subSections.get(subSections.size() - 1);
+                            String lastSubSectionText = lastSubSection.getSectionText();
+                            if (lastSubSectionText == null) {
+                                lastSubSectionText = "";
+                            }
+                            String lastSectionNewText = lastSubSectionText + parentSectionTextLine;
+                            lastSubSection.setSectionText(lastSectionNewText);
+                        }
+                    }
+                }
+                parentSection.setSubSections(subSections);
+            }
+        }
+        return parentSections;
+    }
+
+    private boolean isSubSectionsExists(Section parentSection) {
+        return parentSection.getSectionName().matches(MAIN_SECTION);
+    }
+
+    private List<String> removeSpacesFromStart(List<String> src) {
+
+        return src;
+    }
+
+    private boolean isNewSubSection(String firstLine) {
+        return firstLine.matches(NEW_SUBSECTION_REGEX);
     }
 
     @Override
@@ -64,7 +109,7 @@ public class FileServiceImpl implements FileService {
     }
 
     @Override
-    public Map<String, Object> search(List<Query> queries){
+    public Map<String, Object> search(List<Query> queries) {
         Map<String, Object> result = new HashMap<>();
         Status operationStatus = new Status();
         operationStatus.setStatusType(StatusType.OK);
@@ -74,7 +119,7 @@ public class FileServiceImpl implements FileService {
         for (Query query : queries) {
             String queryText = query.getQueryText();
             try {
-                Thread.sleep(UtilService.getRandomNumberInRange(3000, 5000));
+                Thread.sleep(500);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -103,7 +148,7 @@ public class FileServiceImpl implements FileService {
     private List<Query> generateQueries(List<String> words) {
         List<Query> queries = new ArrayList<>();
         for (int queryFirstWordIndex = 0; queryFirstWordIndex < words.size(); queryFirstWordIndex += 3) {
-            Query query = new Query(BigInteger.valueOf(new Random(1000000).nextInt()));
+            Query query = new Query();
             int queryLastWordIndex = queryFirstWordIndex + 5;
             if (queryLastWordIndex >= words.size()) {
                 queryLastWordIndex = words.size();
@@ -120,60 +165,55 @@ public class FileServiceImpl implements FileService {
         return queries;
     }
 
-    private FileEntity childFileFactory(String childName, String childText, Status childStatus) {
-        FileEntity childFile = new FileEntity();
-        childFile.setFileName(childName);
-        childFile.setFileText(childText);
-        childFile.setStatus(childStatus);
-        return childFile;
-    }
-
-    private ArrayList<String> removeTitleListFromDOM(ArrayList<String> domStructure) {
-        ArrayList<String> structureForDelete = new ArrayList<>();
-        for (String domStructureElement : domStructure) {
-            if (domStructureElement.matches(TITLE_PAGE_LAST_ITEM)) {
-                structureForDelete.add(domStructureElement);
-                break;
+    private List<Section> prepareSections(String text) {
+        List<String> pages = new ArrayList<>(Arrays.asList(text.split(SPLIT_BY_PAGES)));
+        pages = removePaging(pages);
+        List<Section> sections = new ArrayList<>();
+        for (String page : pages) {
+            List<String> lines = new ArrayList<>(Arrays.asList(page.split("\n")));
+            String firstLine = "";
+            for (String line : lines) {
+                if (StringUtils.isNotEmpty(line.trim())) {
+                    firstLine = line;
+                    break;
+                }
             }
-            structureForDelete.add(domStructureElement);
-        }
-        domStructure.removeAll(structureForDelete);
-        return domStructure;
-    }
+            StringBuilder sectionText = new StringBuilder();
+            if (isNewSection(firstLine)) {
+                Section section = new Section();
+                List<String> pageElements = new ArrayList<>(Arrays.asList(page.split(" \n \n")));
+                String sectionName = pageElements.get(0)
+                        .replaceAll("\n", "")
+                        .replaceAll(" ", "_");
 
-    private Map<String, String> prepareAndSplitBySections(String fileText) {
-        ArrayList<String> rawSections = removePagingAndTitle(fileText);
-        return formatSections(rawSections);
-    }
-
-    private Map<String, String> formatSections(ArrayList<String> rawSections) {
-        Map<String, String> formattedSections = new HashMap<>();
-        for (String rawSection : rawSections) {
-            ArrayList<String> sectionNameAndText = new ArrayList<>(Arrays.asList(rawSection.split(NEW_SUBSECTION_REGEX)));
-            if (sectionNameAndText.size() > 1) {
-                String sectionName = sectionNameAndText.get(0);
-                String sectionText = getSectionText(sectionNameAndText);
-                formattedSections.put(sectionName, sectionText);
+                for (int i = 1; i < pageElements.size(); i++) {
+                    sectionText.append(pageElements.get(i));
+                }
+                section.setSectionName(sectionName);
+                section.setSectionText(sectionText.toString());
+                sections.add(section);
+            } else {
+                if (sections.size() > 0) {
+                    Section lastSection = sections.get(sections.size() - 1);
+                    String lastSectionText = lastSection.getSectionText();
+                    String lastSectionNewText = lastSectionText + "\n" + page;
+                    lastSection.setSectionText(lastSectionNewText);
+                }
             }
+
         }
-        return formattedSections;
+        return sections;
     }
 
-    private String getSectionText(ArrayList<String> sectionNameAndText) {
-        StringBuilder sectionText = new StringBuilder();
-        for (int i = 1; i < sectionNameAndText.size(); i++) {
-            sectionText.append(sectionNameAndText.get(i));
+    private boolean isNewSection(String firstLine) {
+        return firstLine.toUpperCase().matches(CYRILLIC_LETTERS) && (firstLine.toUpperCase().equals(firstLine) || firstLine.toUpperCase().matches(ADDITION));
+    }
+
+    private List<String> removePaging(List<String> pages) {
+        List<String> pagesWithoutPaging = new ArrayList<>();
+        for (String page : pages) {
+            pagesWithoutPaging.add(page.replaceAll(PAGING_REGEX, ""));
         }
-        return sectionText.toString();
-    }
-
-    private ArrayList<String> removePagingAndTitle(String text) {
-        text = removePaging(text);
-        ArrayList<String> sectionsWithTitle = new ArrayList<>(Arrays.asList(text.split(NEW_SECTION_REGEX)));
-        return removeTitleListFromDOM(sectionsWithTitle);
-    }
-
-    private String removePaging(String fileContent) {
-        return fileContent.replaceAll("\n[0-9]\n", "\n\n");
+        return pagesWithoutPaging;
     }
 }

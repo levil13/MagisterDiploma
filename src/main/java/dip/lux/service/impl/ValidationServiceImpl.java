@@ -49,4 +49,11 @@ public class ValidationServiceImpl implements ValidationService {
     public boolean isODT(String format){
         return DocType.ODT.equals(format);
     }
+
+    @Override
+    public boolean isPDF(String format) {
+        return DocType.PDF.equals(format);
+    }
+
+
 }

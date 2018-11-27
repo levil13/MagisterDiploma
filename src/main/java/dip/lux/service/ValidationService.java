@@ -8,4 +8,6 @@ public interface ValidationService {
     boolean isDOC(String format);
 
     boolean isODT(String format);
+
+    boolean isPDF(String format);
 }

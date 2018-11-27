@@ -1,4 +1,4 @@
-var app = angular.module('app', ['ui.router', 'ngStorage', 'app.constants', 'ngFileUpload']);
+var app = angular.module('app', ['ui.router', 'ngStorage', 'app.constants', 'ngFileUpload', 'ui.bootstrap']);
 
 app
     .config(['$stateProvider', '$urlRouterProvider',

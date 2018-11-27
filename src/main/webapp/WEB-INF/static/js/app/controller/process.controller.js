@@ -1,4 +1,4 @@
-function processController($rootScope, $stateParams, $state, restRequestService, utilService) {
+function processController($q, $rootScope, $stateParams, $state, restRequestService, utilService) {
 
     var self = this;
 
@@ -8,14 +8,13 @@ function processController($rootScope, $stateParams, $state, restRequestService,
         if (!self.fileName) {
             _updateCurrentFileName();
         }
-    };
+        var readFilePromise = self.readFile(self.fileName);
+        var createDOMPromise = self.createDOM(self.fileName);
 
-    self.readFile = function (fileName) {
-        utilService.toggleLoading(true);
-        var fileNameWithoutFormat = utilService.getFileNameWithoutFormat(fileName);
-        restRequestService.readFile(fileNameWithoutFormat)
-            .then(function (response) {
-                self.text = response && response.data && response.data.fileText;
+        $q.all([readFilePromise, createDOMPromise])
+            .then(function (responses) {
+                self.text = responses[0] && responses[0].data && responses[0].data.fileText;
+                self.sections = responses[1] && responses[1].data && responses[1].data.sections;
             })
             .catch(function (reason) {
                 $state.go('error', {errorMsg: reason.data.errorMsg});
@@ -25,11 +24,21 @@ function processController($rootScope, $stateParams, $state, restRequestService,
             });
     };
 
+    self.toggleSubSections = function(index, state){
+        self.sections[index].showSubSections = !state;
+    };
+
+    self.readFile = function (fileName) {
+        utilService.toggleLoading(true);
+        var fileNameWithoutFormat = utilService.getFileNameWithoutFormat(fileName);
+        return restRequestService.readFile(fileNameWithoutFormat);
+    };
+
     self.readChildFile = function (childFileName) {
         utilService.toggleLoading(true);
         restRequestService.readChildFile(utilService.getFileNameWithoutFormat(self.fileName), childFileName)
             .then(function (response) {
-                self.childFileText = response && response.data && response.data.childFileText;
+                self.sectionText = response && response.data && response.data.sectionText;
             })
             .catch(function (reason) {
                 $state.go('error', {errorMsg: reason.data.errorMsg});
@@ -57,16 +66,7 @@ function processController($rootScope, $stateParams, $state, restRequestService,
     self.createDOM = function (fileName) {
         utilService.toggleLoading(true);
         var fileNameWithoutFormat = utilService.getFileNameWithoutFormat(fileName);
-        restRequestService.createDOM(fileNameWithoutFormat)
-            .then(function (response) {
-                self.childFiles = response && response.data && response.data.childFiles;
-            })
-            .catch(function (reason) {
-                $state.go('error', {errorMsg: reason.data.errorMsg});
-            })
-            .finally(function () {
-                utilService.toggleLoading(false);
-            });
+        return restRequestService.createDOM(fileNameWithoutFormat);
     };
 
     self.findUsages = function (fileName) {
@@ -75,11 +75,9 @@ function processController($rootScope, $stateParams, $state, restRequestService,
         restRequestService.calculateQueries(fileNameWithoutFormat)
             .then(function (response) {
                 self.queriesSize = response.data.queriesSize;
-                _startTimer();
                 return restRequestService.searchQueries(fileNameWithoutFormat);
             })
             .then(function (response) {
-                _stopTimer();
                 $state.go('result', {
                     fileName: fileNameWithoutFormat,
                     queries: response.data && response.data.queriesWithResponses
@@ -105,13 +103,5 @@ function processController($rootScope, $stateParams, $state, restRequestService,
             .finally(function () {
                 utilService.toggleLoading(false);
             });
-    }
-
-    function _startTimer() {
-        $rootScope.$broadcast('timer-start');
-    }
-
-    function _stopTimer() {
-        $rootScope.$broadcast('timer-stop');
     }
 }

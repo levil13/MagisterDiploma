@@ -2,6 +2,7 @@ package dip.lux.service.impl;
 
 import com.itextpdf.text.DocumentException;
 import dip.lux.service.UploadService;
+import dip.lux.service.ValidationService;
 import dip.lux.service.model.StatusType;
 import dip.lux.service.util.DocsConverter.DocsConverter;
 import org.slf4j.Logger;
@@ -11,10 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -22,41 +20,53 @@ import java.util.Objects;
 @Service
 public class UploadServiceImpl implements UploadService {
     private static Logger logger = LoggerFactory.getLogger(UploadServiceImpl.class);
-    private static final String UPLOAD_FOLDER = "C:\\Temp\\raw";
+    private static final String RAW_FOLDER = "C:\\Temp\\raw";
+    private static final String CONVERTED_FOLDER = "C:\\Temp\\converted";
     private Integer counter = 0;
 
     @Autowired
     private DocsConverter docsConverter;
 
+    @Autowired
+    private ValidationService validationService;
+
     @Override
     public String upload(MultipartFile file) {
-        boolean isDirectoryExists = UtilService.createDirectoryIfNotExists(UPLOAD_FOLDER);
-        if(isDirectoryExists){
+        boolean isDirectoryExists = UtilService.createDirectoryIfNotExists(RAW_FOLDER);
+        if (isDirectoryExists) {
             byte[] fileBytes = getFileBytes(file);
             String fileName = file.getOriginalFilename();
-            if(isFileUploaded(fileName)){
+            if (isFileUploaded(fileName)) {
                 fileName = generateOriginalFileName(fileName);
             }
-            writeFile(UPLOAD_FOLDER, fileBytes, fileName);
-            try {
-                formatFile(fileName);
-            } catch (IOException | DocumentException e) {
-                logger.error("Can't format the file: " + e);
-                return StatusType.ERROR.getType();
+            if (validationService.isPDF(UtilService.getFileFormat(fileName))) {
+                String fileNameWithoutFormat = UtilService.getNameWithoutFormat(fileName);
+                String folderPath = UtilService.generateConvertedFolderPath(fileNameWithoutFormat);
+                UtilService.createDirectoryIfNotExists(folderPath);
+                writeFile(folderPath, fileBytes, fileName);
+                return fileName;
+            } else {
+                writeFile(RAW_FOLDER, fileBytes, fileName);
+                try {
+                    formatFile(fileName);
+                } catch (IOException | DocumentException e) {
+                    logger.error("Can't format the file: " + e);
+                    return StatusType.ERROR.getType();
+                }
+                return fileName;
             }
-            return fileName;
         }
         return StatusType.ERROR.getType();
     }
 
     private void formatFile(String fileName) throws IOException, DocumentException {
-        File newDoc = new File(UPLOAD_FOLDER + File.separator + fileName);
+        File newDoc = new File(RAW_FOLDER + File.separator + fileName);
         String name = newDoc.getName();
         String format = UtilService.getFileFormat(name);
         docsConverter.convertByFormat(format, newDoc);
     }
 
-    private void writeFile(String path, byte[] fileBytes, String fileName){
+    private void writeFile(String path, byte[] fileBytes, String fileName) {
         try (BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(
                 new File(path + File.separator + fileName)))) {
             stream.write(fileBytes);
@@ -65,7 +75,7 @@ public class UploadServiceImpl implements UploadService {
         }
     }
 
-    private byte[] getFileBytes(MultipartFile file){
+    private byte[] getFileBytes(MultipartFile file) {
         byte[] bytes = new byte[0];
         try {
             bytes = file.getBytes();
@@ -78,27 +88,32 @@ public class UploadServiceImpl implements UploadService {
     private String generateOriginalFileName(String fileName) {
         counter++;
         String generatedName = createOriginalFileName(fileName, counter);
-        if(isFileUploaded(generatedName)){
+        if (isFileUploaded(generatedName)) {
             generatedName = generateOriginalFileName(generatedName);
         }
         return generatedName;
     }
 
     private boolean isFileUploaded(String fileName) {
-        List<String> uploadedFiles = getFilesInFolder(new File(UPLOAD_FOLDER));
-        if(CollectionUtils.isEmpty(uploadedFiles)){
+        String fileFormat = UtilService.getFileFormat(fileName);
+        List<String> uploadedFiles = getFilesInFolder(new File(RAW_FOLDER));
+        if(validationService.isPDF(fileFormat)){
+            return new File(CONVERTED_FOLDER + File.separator + UtilService.getNameWithoutFormat(fileName)).exists();
+        }
+
+        if (CollectionUtils.isEmpty(uploadedFiles)) {
             return false;
         }
 
-        for(String uploadedFile: uploadedFiles){
-            if(uploadedFile.equals(fileName)){
+        for (String uploadedFile : uploadedFiles) {
+            if (uploadedFile.equals(fileName)) {
                 return true;
             }
         }
         return false;
     }
 
-    private String createOriginalFileName(String fileName, Integer counter){
+    private String createOriginalFileName(String fileName, Integer counter) {
         String[] fileNameParts = fileName.split("\\.");
         return fileNameParts[0] + "_" + counter + "." + fileNameParts[1];
     }

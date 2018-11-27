@@ -10,7 +10,7 @@ import java.util.List;
 public class FileEntity {
     private String fileName;
     private String fileText;
-    private List<FileEntity> childFiles;
+    private List<Section> sections;
     private Status status;
     private List<Query> queries;
 
@@ -30,12 +30,12 @@ public class FileEntity {
         this.status = status;
     }
 
-    public List<FileEntity> getChildFiles() {
-        return childFiles;
+    public List<Section> getSections() {
+        return sections;
     }
 
-    public void setChildFiles(List<FileEntity> childFiles) {
-        this.childFiles = childFiles;
+    public void setSections(List<Section> sections) {
+        this.sections = sections;
     }
 
     public String getFileText() {

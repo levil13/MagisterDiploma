@@ -1,6 +1,7 @@
 package dip.lux.controller;
 
 import dip.lux.model.FileEntity;
+import dip.lux.model.Section;
 import dip.lux.model.util.Query;
 import dip.lux.model.util.Status;
 import dip.lux.service.FileService;
@@ -17,7 +18,6 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -74,9 +74,6 @@ public class FileController {
             updateSessionFileContent(parentName);
         }
         FileEntity fileToRead = fileEntity;
-        if (StringUtils.isNotEmpty(childName)) {
-            fileToRead = findSessionChildFile(childName);
-        }
         if (fileToRead.getStatus().getStatusType().equals(StatusType.ERROR)) {
             response.put("errorMsg", fileToRead.getStatus().getErrorMsg());
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -91,12 +88,7 @@ public class FileController {
     public ResponseEntity canonizeFile(@PathVariable String fileName) {
         Map<String, Object> response = new HashMap<>();
         FileEntity fileToCanonize = new FileEntity();
-        if (isSessionFile(fileName)) {
-            fileToCanonize = fileEntity;
-        }
-        if (isSessionChildFile(fileName)) {
-            fileToCanonize = findSessionChildFile(fileName);
-        }
+        fileToCanonize = fileEntity;
         if (fileToCanonize.getStatus().getStatusType().equals(StatusType.ERROR)) {
             response.put("errorMsg", fileToCanonize.getStatus().getErrorMsg());
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -112,39 +104,24 @@ public class FileController {
     @ResponseBody
     public ResponseEntity createDOM() {
         Map<String, Object> response = new HashMap<>();
-        if (StringUtils.isEmpty(fileEntity.getFileText())) {
-            updateSessionFileContent(fileEntity.getFileName());
-        }
-        List<FileEntity> childFiles = fileService.createDOM(fileEntity.getFileText(), fileEntity.getFileName());
-        for (FileEntity childFile : childFiles) {
-            Status childStatus = childFile.getStatus();
-            if (childStatus.getStatusType().equals(StatusType.ERROR)) {
-                response.put("errorMsg", childStatus.getErrorMsg() + " in file " + childFile.getFileName());
-                return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
-            }
-        }
-        fileEntity.setChildFiles(childFiles);
-        response.put("childFiles", childFiles);
+        updateSessionFileContent(fileEntity.getFileName());
+        List<Section> sections = fileService.createDOM(fileEntity.getFileText(), fileEntity.getFileName());
+        fileEntity.setSections(sections);
+        response.put("sections", sections);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @GetMapping(value = "/searchQueries")
     @ResponseBody
-    public ResponseEntity searchQueries(@RequestParam String fileName){
+    public ResponseEntity searchQueries(@RequestParam String fileName) {
         Map<String, Object> response = new HashMap<>();
         FileEntity fileToFindUsages;
-        if(isSessionFile(fileName)){
-            fileToFindUsages = fileEntity;
-        } else if(isSessionChildFile(fileName)){
-            fileToFindUsages = findSessionChildFile(fileName);
-        } else {
-            updateSessionFileContent(fileName);
-            fileToFindUsages = fileEntity;
-        }
+        updateSessionFileContent(fileName);
+        fileToFindUsages = fileEntity;
         Map<String, Object> result = fileService.search(fileToFindUsages.getQueries());
 
         Status findUsagesStatus = (Status) result.get("status");
-        if(findUsagesStatus.getStatusType().equals(StatusType.ERROR)){
+        if (findUsagesStatus.getStatusType().equals(StatusType.ERROR)) {
             response.put("errorMsg", findUsagesStatus.getErrorMsg() + " in file " + fileToFindUsages.getFileName());
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -156,17 +133,11 @@ public class FileController {
 
     @GetMapping(value = "/calculate-queries")
     @ResponseBody
-    public ResponseEntity calculateQueries(@RequestParam String fileName){
+    public ResponseEntity calculateQueries(@RequestParam String fileName) {
         Map<String, Object> response = new HashMap<>();
         FileEntity fileToFindUsages;
-        if(isSessionFile(fileName)){
-            fileToFindUsages = fileEntity;
-        } else if(isSessionChildFile(fileName)){
-            fileToFindUsages = findSessionChildFile(fileName);
-        } else {
-            updateSessionFileContent(fileName);
-            fileToFindUsages = fileEntity;
-        }
+        updateSessionFileContent(fileName);
+        fileToFindUsages = fileEntity;
         String canonizedText = shingleService.canonize(fileToFindUsages.getFileText());
         List<Query> queries = fileService.getQueries(canonizedText, fileToFindUsages.getFileName());
 
@@ -178,21 +149,13 @@ public class FileController {
     }
 
 
-
     @GetMapping(value = "/get-existing-queries")
     @ResponseBody
-    public ResponseEntity getExistingUsages(@RequestParam String fileName){
+    public ResponseEntity getExistingUsages(@RequestParam String fileName) {
         Map<String, Object> response = new HashMap<>();
         FileEntity fileToFindUsages;
-        if(isSessionFile(fileName)){
-            fileToFindUsages = fileEntity;
-        } else if(isSessionChildFile(fileName)){
-            fileToFindUsages = findSessionChildFile(fileName);
-        } else {
-            updateSessionFileContent(fileName);
-            fileToFindUsages = fileEntity;
-        }
-
+        updateSessionFileContent(fileName);
+        fileToFindUsages = fileEntity;
         response.put("queriesWithResponses", fileToFindUsages.getQueries());
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
@@ -218,30 +181,5 @@ public class FileController {
 
     private boolean isSessionFile(String fileName) {
         return (StringUtils.equals(fileName, fileEntity.getFileName())) && StringUtils.isNotEmpty(fileEntity.getFileText());
-    }
-
-    private boolean isSessionChildFile(String childName) {
-        List<FileEntity> sessionChildFiles = fileEntity.getChildFiles();
-        if (CollectionUtils.isEmpty(sessionChildFiles)) {
-            return false;
-        }
-        for (FileEntity sessionChildFile : sessionChildFiles) {
-            if (StringUtils.equals(sessionChildFile.getFileName(), childName)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private FileEntity findSessionChildFile(String childName) {
-        List<FileEntity> sessionChildFiles = fileEntity.getChildFiles();
-        FileEntity foundFile = null;
-        for (FileEntity sessionChildFile : sessionChildFiles) {
-            if (StringUtils.equals(sessionChildFile.getFileName(), childName)) {
-                foundFile = sessionChildFile;
-                break;
-            }
-        }
-        return foundFile;
     }
 }

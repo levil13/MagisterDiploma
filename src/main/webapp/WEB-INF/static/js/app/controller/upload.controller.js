@@ -1,4 +1,4 @@
-function uploadController($scope, $state, restRequestService, utilService, transliterateService) {
+function uploadController($scope, $state, restRequestService, utilService) {
     var self = this;
     self.$onInit = function () {
         self.utilService = utilService;

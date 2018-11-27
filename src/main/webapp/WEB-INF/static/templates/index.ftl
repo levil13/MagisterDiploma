@@ -14,6 +14,7 @@
 <script src="scripts/lib/angular-ui-router.js"></script>
 <script src="scripts/lib/ngStorage.js"></script>
 <script src="scripts/lib/angular-timer.min.js"></script>
+<script src="scripts/lib/ui-bootstrap-tpls-2.5.0.js"></script>
 <script src="scripts/app/constants/urls.const.js"></script>
 <script src="scripts/app/constants/constants.module.js"></script>
 <script src="scripts/app/service/rest.service.js"></script>

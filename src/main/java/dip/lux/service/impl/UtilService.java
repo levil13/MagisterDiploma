@@ -30,6 +30,9 @@ public class UtilService {
     }
 
     public static String getFileFormat(String name) {
+        if(name == null){
+            return "Empty name";
+        }
         String[] nameParts = name.split("\\.");
         if (nameParts.length != 2) {
             return "Wrong file format";

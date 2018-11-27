@@ -3,6 +3,7 @@ package dip.lux.service.model;
 public enum DocType {
     DOC("DOC"),
     DOCX("DOCX"),
+    PDF("PDF"),
     ODT("ODT");
 
     private final String type;

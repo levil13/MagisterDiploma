@@ -1,0 +1,52 @@
+.file-text {
+    width: 50%;
+    float: right;
+}
+
+.card {
+    overflow: hidden;
+}
+
+.card-text {
+    word-wrap: break-word;
+}
+
+.file-card {
+    background-color: dodgerblue;
+}
+
+.section-card {
+    background-color: orange;
+}
+
+.file-title {
+    text-align: center;
+}
+
+.file-text-content {
+    overflow: scroll;
+    max-height: 500px;
+}
+
+.found-sections {
+    text-align: left;
+}
+
+.scan-btn-container {
+    display: table;
+}
+
+.scan-btn-holder {
+    text-align: center;
+    width: 500px;
+    display: table-footer-group;
+}
+
+.scan-btn {
+    margin-top: 50px;
+    width: 500px;
+}
+
+.section-name {
+    max-width: 500px;
+}

@@ -18,25 +18,30 @@ public class PdfParserImpl implements PdfParser {
     }
 
     public String parsePdf(String pdfFileName, List<String> stopStrings) throws IOException {
-        fullParsedFile = "";
+        StringBuilder fullParsedFile = new StringBuilder();
         pdfReader = new PdfReader(pdfFileName);
         int pageNum = pdfReader.getNumberOfPages();
         for (int i = 1; i <= pageNum; i++) {
-            String page = PdfTextExtractor.getTextFromPage(pdfReader, i);
-            if(isNeedFullPage(page, stopStrings)){
-                fullParsedFile += page;
+            try {
+                String page = PdfTextExtractor.getTextFromPage(pdfReader, i);
+                if (i > 1) {
+                    fullParsedFile.append("\nNPD\n");
+                }
+                fullParsedFile.append(page);
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         }
-        return fullParsedFile;
+        return fullParsedFile.toString();
     }
 
     private boolean isNeedFullPage(String page, List<String> stopStrings) {
-        if (CollectionUtils.isEmpty(stopStrings)){
+        if (CollectionUtils.isEmpty(stopStrings)) {
             return true;
         }
 
-        for(String stopString: stopStrings){
-            if(page.toLowerCase().contains(stopString.toLowerCase() + "\n")){
+        for (String stopString : stopStrings) {
+            if (page.toLowerCase().contains(stopString.toLowerCase() + "\n")) {
                 return false;
             }
         }
