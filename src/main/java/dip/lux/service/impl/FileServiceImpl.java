@@ -10,16 +10,19 @@ import dip.lux.service.util.PdfParser.PdfParser;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 public class FileServiceImpl implements FileService {
 
-    private final String NEW_SUBSECTION_REGEX = "([0-9]+\\.?)+ ((\\p{L})+\\s*?-?)+";
+    private final String NEW_SUBSECTION_REGEX = "[0-9]+\\.([0-9]+\\.?)+ ((\\p{L})+\\s*?-?\\.?–?\\s?)+";
     private final String NEW_SUBSECTION_NUMBER_REGEX = "([0-9]+\\.?)+";
-    private final String SUBSECTION_INSIDE_TEXT = "(\\p{L})+([0-9]+\\.?)+ ((\\p{L})+\\s*?-?)+";
+    private final String SUBSECTION_INSIDE_TEXT = "(\\p{L})+([0-9]+\\.?)+";
     private final String SPLIT_BY_WORDS_REGEX = " ";
     private final String SPLIT_BY_PAGES = "\nNPD\n";
     private final String PAGING_REGEX = "([0-9])+(((\\s?)+(\n)+))+";
@@ -74,7 +77,7 @@ public class FileServiceImpl implements FileService {
                         subSection.setSectionName(sectionName);
                         subSections.add(subSection);
                     } else {
-                        if (subSections.size() > 0) {
+                        if (!CollectionUtils.isEmpty(subSections)) {
                             Section lastSubSection = subSections.get(subSections.size() - 1);
                             String lastSubSectionText = lastSubSection.getSectionText();
                             if (lastSubSectionText == null) {
@@ -97,19 +100,25 @@ public class FileServiceImpl implements FileService {
 
     private List<String> exctractSubsectionsFromText(List<String> textLines) {
         List<String> lines = new ArrayList<>();
-        for(String textLine: textLines){
+        for (String textLine : textLines) {
             StringBuilder newLine = new StringBuilder();
             List<String> words = new ArrayList<>(Arrays.asList(textLine.split(SPLIT_BY_WORDS_REGEX)));
-            for(String word: words){
-                if(word.matches(SUBSECTION_INSIDE_TEXT)){
-                    List<String> wordParts = new ArrayList<>(Arrays.asList(textLine.split(NEW_SUBSECTION_NUMBER_REGEX)));
-                    newLine.append(wordParts.get(1));
-                } else {
+            for (String word : words) {
+                if (word.matches(SUBSECTION_INSIDE_TEXT)) {
+                    Pattern p = Pattern.compile(NEW_SUBSECTION_NUMBER_REGEX);
+                    Matcher m = p.matcher(word);
+                    if (m.find()) {
+                        String extraLine = word.replaceAll("\\p{L}?[a-zA-z]?", "") + " ";
+                        newLine = new StringBuilder(extraLine);
+                    }
+                } else if (!word.equals(" ") && !word.equals("")) {
                     newLine.append(word);
+                    newLine.append(" ");
                 }
-                newLine.append(" ");
             }
-            lines.add(newLine.toString());
+            if (!newLine.toString().equals("")) {
+                lines.add(newLine.toString());
+            }
         }
 
         return lines;

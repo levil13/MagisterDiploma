@@ -1,16 +1,19 @@
 package dip.lux.service.util.PdfParser.impl;
 
-import com.itextpdf.text.pdf.PdfReader;
+import com.itextpdf.text.pdf.*;
 import com.itextpdf.text.pdf.parser.PdfTextExtractor;
 import dip.lux.service.util.PdfParser.PdfParser;
-import org.springframework.util.CollectionUtils;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class PdfParserImpl implements PdfParser {
     private PdfReader pdfReader;
-    private String fullParsedFile;
+    private PdfWriter pdfWriter;
+    private PdfDocument pdfDocument;
+    private final String LAST_TITLE_ITEM = "(\\p{L}){0,20} ?-?–? ?[0-9]{4}";
 
     @Override
     public String parsePdf(String pdfFileName) throws IOException {
@@ -35,16 +38,13 @@ public class PdfParserImpl implements PdfParser {
         return fullParsedFile.toString();
     }
 
-    private boolean isNeedFullPage(String page, List<String> stopStrings) {
-        if (CollectionUtils.isEmpty(stopStrings)) {
-            return true;
-        }
-
-        for (String stopString : stopStrings) {
-            if (page.toLowerCase().contains(stopString.toLowerCase() + "\n")) {
-                return false;
+    private boolean isShiftedLines(String page) {
+        List<String> pageLines = new ArrayList<>(Arrays.asList(page.replaceAll("\n+", "\n").split("\n")));
+        for (int i = 0; i < pageLines.size(); i++) {
+            if (pageLines.get(i).matches(LAST_TITLE_ITEM) && i != pageLines.size() - 1) {
+                return true;
             }
         }
-        return true;
+        return false;
     }
 }
