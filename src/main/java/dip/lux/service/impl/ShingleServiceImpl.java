@@ -7,7 +7,8 @@ import java.util.ArrayList;
 
 @Service
 public class ShingleServiceImpl implements ShingleService {
-    private static final String[] STOP_WORDS_RU = {"это", "как", "так", "над", "для", "что", "кто", "она", "таблица", "рисунок", "рис", "таб", "табл"};
+    private static final String[] STOP_WORDS_RU = {"это", "как", "так", "над", "для", "что", "кто", "она", "таблица",
+            "рисунок", "рис", "таб", "табл"};
 
     private static final int SHINGLE_LEN = 2;
 

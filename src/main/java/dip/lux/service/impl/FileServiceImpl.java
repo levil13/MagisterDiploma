@@ -18,6 +18,8 @@ import java.util.*;
 public class FileServiceImpl implements FileService {
 
     private final String NEW_SUBSECTION_REGEX = "([0-9]+\\.?)+ ((\\p{L})+\\s*?-?)+";
+    private final String NEW_SUBSECTION_NUMBER_REGEX = "([0-9]+\\.?)+";
+    private final String SUBSECTION_INSIDE_TEXT = "(\\p{L})+([0-9]+\\.?)+ ((\\p{L})+\\s*?-?)+";
     private final String SPLIT_BY_WORDS_REGEX = " ";
     private final String SPLIT_BY_PAGES = "\nNPD\n";
     private final String PAGING_REGEX = "([0-9])+(((\\s?)+(\n)+))+";
@@ -64,7 +66,7 @@ public class FileServiceImpl implements FileService {
             if (isSubSectionsExists(parentSection)) {
                 List<Section> subSections = new ArrayList<>();
                 List<String> parentSectionTextLines = new ArrayList<>(Arrays.asList(parentSection.getSectionText().split("\n")));
-                parentSectionTextLines = removeSpacesFromStart(parentSectionTextLines);
+                parentSectionTextLines = exctractSubsectionsFromText(parentSectionTextLines);
                 for (String parentSectionTextLine : parentSectionTextLines) {
                     if (isNewSubSection((parentSectionTextLine))) {
                         Section subSection = new Section();
@@ -93,9 +95,24 @@ public class FileServiceImpl implements FileService {
         return parentSection.getSectionName().matches(MAIN_SECTION);
     }
 
-    private List<String> removeSpacesFromStart(List<String> src) {
+    private List<String> exctractSubsectionsFromText(List<String> textLines) {
+        List<String> lines = new ArrayList<>();
+        for(String textLine: textLines){
+            StringBuilder newLine = new StringBuilder();
+            List<String> words = new ArrayList<>(Arrays.asList(textLine.split(SPLIT_BY_WORDS_REGEX)));
+            for(String word: words){
+                if(word.matches(SUBSECTION_INSIDE_TEXT)){
+                    List<String> wordParts = new ArrayList<>(Arrays.asList(textLine.split(NEW_SUBSECTION_NUMBER_REGEX)));
+                    newLine.append(wordParts.get(1));
+                } else {
+                    newLine.append(word);
+                }
+                newLine.append(" ");
+            }
+            lines.add(newLine.toString());
+        }
 
-        return src;
+        return lines;
     }
 
     private boolean isNewSubSection(String firstLine) {
