@@ -42,6 +42,10 @@ function restRequestService(restService, Upload, urls, utilService) {
     service.getExistingUsages = function (fileName) {
         return restService.get('/file/get-existing-queries/', {fileName: fileName});
     };
+    
+    service.updateSectionWeight = function (sectionName, newWeight) {
+        return restService.put('/file/update-section-weight', null, {sectionName: sectionName, newWeight: newWeight});
+    };
 
     return service;
 }

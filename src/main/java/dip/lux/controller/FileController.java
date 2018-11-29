@@ -83,6 +83,32 @@ public class FileController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
+    @PutMapping(value = "/update-section-weight")
+    @ResponseBody
+    public ResponseEntity updateSectionWeight(@RequestParam(value = "sectionName") String sectionName,
+                                              @RequestParam(value = "newWeight") Integer newWeight) {
+        Section sectionToBeUpdated = null;
+        for (Section section : fileEntity.getSections()) {
+            if (section.getSectionName().equals(sectionName)) {
+                sectionToBeUpdated = section;
+                break;
+            }
+            if (!CollectionUtils.isEmpty(section.getSubSections())) {
+                for (Section subSection : section.getSubSections()) {
+                    if (subSection.getSectionName().equals(sectionName)) {
+                        sectionToBeUpdated = subSection;
+                        break;
+                    }
+                }
+            }
+        }
+        if (sectionToBeUpdated == null) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        sectionToBeUpdated.setSectionWeight(newWeight);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
     @GetMapping(value = "/canonize/{fileName}")
     @ResponseBody
     public ResponseEntity canonizeFile(@PathVariable String fileName) {
@@ -105,6 +131,10 @@ public class FileController {
     public ResponseEntity createDOM() {
         Map<String, Object> response = new HashMap<>();
         updateSessionFileContent(fileEntity.getFileName());
+        if (!CollectionUtils.isEmpty(fileEntity.getSections())) {
+            response.put("sections", fileEntity.getSections());
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        }
         List<Section> sections = fileService.createDOM(fileEntity.getFileText(), fileEntity.getFileName());
         fileEntity.setSections(sections);
         response.put("sections", sections);

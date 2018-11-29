@@ -30,26 +30,31 @@
         <div class="found-sections" ng-hide="!processCtrl.sections">
             <div ng-repeat="section in processCtrl.sections">
                 <button class="btn btn-primary" ng-click="processCtrl.sectionText = section.sectionText">Read</button>
-                <button class="btn btn-primary" ng-show="section.subSections" ng-click="processCtrl.toggleSubSections($index, section.showSubSections)">Show
+                <button class="btn btn-primary" ng-show="section.subSections"
+                        ng-click="processCtrl.toggleSubSections($index, section.showSubSections)">Show
                     subsections
                 </button>
-                <label>
-                    Section weight:
-                    <input type="number"
-                           min="-5"
-                           max="5"
-                           value="0">
-                </label>
+                <form class="section-form" name="processCtrl.forms.form{{section.sectionId}}">
+                    <label>
+                        Section weight:
+                        <input name="input{{section.sectionId}}" type="number"
+                               ng-model="section.sectionWeight"
+                               ng-change="processCtrl.changeWeight(section)">
+                    </label>
+                </form>
                 <h3 class="badge badge-primary section-name">{{section.sectionName}}</h3>
                 <div ng-show="section.showSubSections" ng-repeat="subsection in section.subSections">
-                    <button class="btn btn-primary" ng-click="processCtrl.sectionText = subsection.sectionText">Read</button>
-                    <label>
-                        Subsection weight:
-                        <input type="number"
-                               min="-5"
-                               max="5"
-                               value="0">
-                    </label>
+                    <button class="btn btn-primary" ng-click="processCtrl.sectionText = subsection.sectionText">Read
+                    </button>
+                    <form class="section-form" name="processCtrl.forms.form{{section.sectionId}}">
+                        <label>
+                            Subsection weight:
+                            <input name="input{{section.sectionId}}"
+                                   type="number"
+                                   ng-model="subsection.sectionWeight"
+                                   ng-change="processCtrl.changeWeight(subsection)">
+                        </label>
+                    </form>
                     <h3 class="badge badge-light section-name">{{subsection.sectionName}}</h3>
                 </div>
             </div>

@@ -14,6 +14,8 @@ public class FileEntity {
     private Status status;
     private List<Query> queries;
 
+
+
     public List<Query> getQueries() {
         return queries;
     }

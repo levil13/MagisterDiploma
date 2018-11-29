@@ -5,6 +5,7 @@ function processController($q, $rootScope, $stateParams, $state, restRequestServ
     self.$onInit = function () {
         self.utilService = utilService;
         self.fileName = $stateParams.fileName;
+        self.forms = [];
         if (!self.fileName) {
             _updateCurrentFileName();
         }
@@ -24,7 +25,35 @@ function processController($q, $rootScope, $stateParams, $state, restRequestServ
             });
     };
 
-    self.toggleSubSections = function(index, state){
+    self.changeWeight = function (section) {
+        utilService.toggleLoading(true);
+        var form = self.forms['form' + section.sectionId];
+        var input = form['input' + section.sectionId];
+        if (section && section.sectionWeight) {
+            if (section.sectionWeight > 5) {
+                section.sectionWeight = 5;
+            }
+
+            if (section.sectionWeight < -5) {
+                section.sectionWeight = -5;
+            }
+        }
+        input.$viewValue = section.sectionWeight;
+        var sectionName = section && section.sectionName;
+        var sectionWeight = section && section.sectionWeight;
+        restRequestService.updateSectionWeight(sectionName, sectionWeight)
+            .then(function (response) {
+                console.log(response);
+            })
+            .catch(function (reason) {
+                console.log(reason);
+            })
+            .finally(function () {
+                utilService.toggleLoading(false);
+            })
+    };
+
+    self.toggleSubSections = function (index, state) {
         self.sections[index].showSubSections = !state;
     };
 
